@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ระบบเช็คชื่อด้วยใบหน้า</title>
+<link rel="icon" id="fav" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -38,7 +39,7 @@ button,input,select{font:inherit;color:inherit}
 .top{background:var(--surface);border-bottom:1px solid var(--line)}
 .top-in{max-width:1180px;margin:0 auto;padding:12px 20px 0;display:flex;align-items:flex-end;justify-content:space-between;gap:12px 24px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:12px;min-width:0;padding-bottom:12px}
-.mark{width:44px;height:44px;flex:none;border-radius:10px;overflow:hidden}
+.mark{width:52px;height:52px;flex:none;overflow:hidden}
 .mark img{width:100%;height:100%;object-fit:contain;display:block}
 .college{font-size:1.05rem;font-weight:700;line-height:1.3}
 .campus{font-size:.875rem;color:var(--muted);line-height:1.3}
@@ -172,6 +173,17 @@ dialog .field{margin:16px 0 6px}
 .spin{display:inline-block;width:18px;height:18px;border:3px solid var(--line);border-top-color:var(--flag-blue);border-radius:50%;animation:sp 1s linear infinite;vertical-align:-3px;margin-right:8px}
 @keyframes sp{to{transform:rotate(360deg)}}
 
+.btn.green{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.green:hover{background:#0b6146;border-color:#0b6146}
+.rowact{display:flex;gap:8px}
+.nav{overflow-x:auto}
+.nav button{white-space:nowrap}
+.nav button.out{color:var(--bad)}
+.more{align-self:flex-start;margin-top:10px}
+.recent.open{max-height:50vh;overflow-y:auto;padding-right:4px}
+.actfix{padding:11px 12px;border-radius:10px;background:var(--paper);border:1.5px solid var(--line);font-weight:600}
+.slot{cursor:pointer}
+.slot.next .im{border:2px solid var(--flag-blue)}
 @media (max-width:900px){
   .scan,.reg{grid-template-columns:1fr}
   .clock .time{font-size:2.6rem}
@@ -195,17 +207,7 @@ dialog .field{margin:16px 0 6px}
 <header class="top">
   <div class="top-in">
     <div class="brand">
-      <div class="mark" id="mark">
-        <svg viewBox="0 0 44 44" width="44" height="44" aria-hidden="true">
-          <rect width="44" height="44" rx="10" fill="#2D2A4A"/>
-          <rect x="12" y="8" width="2.6" height="29" rx="1.3" fill="#fff"/>
-          <g transform="translate(14.6 9)">
-            <rect width="20" height="3" fill="#D6334D"/><rect y="3" width="20" height="3" fill="#fff"/>
-            <rect y="6" width="20" height="6" fill="#4C5FC4"/><rect y="12" width="20" height="3" fill="#fff"/>
-            <rect y="15" width="20" height="3" fill="#D6334D"/>
-          </g>
-        </svg>
-      </div>
+      <div class="mark" id="mark"><img id="logoImg" alt="โลโก้วิทยาลัยชุมชนพิจิตร" src="data:image/webp;base64,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"></div>
       <div>
         <h1 class="college" id="brandName">วิทยาลัยชุมชนพิจิตร</h1>
         <p class="campus" id="brandCampus">หน่วยจัดการศึกษาทับคล้อ (ขุนไผ่ภูมิเขตร)</p>
@@ -213,8 +215,10 @@ dialog .field{margin:16px 0 6px}
     </div>
     <nav class="nav" aria-label="เมนูหลัก">
       <button type="button" data-view="scan" aria-current="page">สแกนเช็คชื่อ</button>
-      <button type="button" data-view="register">ลงทะเบียนใบหน้า</button>
-      <button type="button" data-view="admin">รายงาน</button>
+      <button type="button" id="navLogin" data-view="login">ลงชื่อเข้าใช้งาน</button>
+      <button type="button" class="adm" data-view="register" hidden>ลงทะเบียนใบหน้า</button>
+      <button type="button" class="adm" data-view="admin" hidden>รายงาน</button>
+      <button type="button" class="adm out" data-view="logout" hidden>ออกจากระบบ</button>
     </nav>
   </div>
 </header>
@@ -248,10 +252,7 @@ dialog .field{margin:16px 0 6px}
         <div class="time num" id="clock">--:--:--</div>
         <div class="date" id="dateTh"></div>
       </div>
-      <label class="field">
-        <span>กิจกรรมที่กำลังเช็คชื่อ</span>
-        <select id="selActivity"></select>
-      </label>
+      <div class="field"><span>กิจกรรมที่กำลังเช็คชื่อ</span><select id="selActivity"></select><div class="actfix" id="actFixed" hidden></div></div>
       <div class="counter">
         <div class="row"><span>เช็คชื่อแล้ว</span><span><b class="num" id="cntDone">0</b> จาก <span class="num" id="cntAll">0</span> คน</span></div>
         <div class="bar" aria-hidden="true"><i id="cntBar"></i></div>
@@ -259,6 +260,7 @@ dialog .field{margin:16px 0 6px}
       <div>
         <h2>เช็คชื่อล่าสุด</h2>
         <ol class="recent" id="recent"></ol>
+        <button type="button" class="btn sm more" id="btnMore" hidden></button>
       </div>
     </aside>
   </section>
@@ -276,17 +278,14 @@ dialog .field{margin:16px 0 6px}
           </button>
         </div>
         <div class="count num" id="regCount" aria-live="polite"></div>
-        <div class="instr" id="regInstr">กรอกข้อมูลด้านขวา แล้วกด “เริ่มบันทึกใบหน้า”</div>
+        <div class="instr" id="regInstr">กรอกข้อมูลด้านขวา แล้วกดปุ่ม “บันทึกภาพ” ทีละมุม</div>
       </div>
       <div class="slots" id="slots"></div>
     </div>
 
     <form class="panel" id="regForm" autocomplete="off" novalidate>
-      <h2>ข้อมูลผู้ใช้ใหม่</h2>
-      <div class="seg" role="radiogroup" aria-label="ประเภทผู้ใช้" style="align-self:flex-start">
-        <label><input type="radio" name="utype" value="นักศึกษา" checked><span>นักศึกษา</span></label>
-        <label><input type="radio" name="utype" value="บุคลากร"><span>บุคลากร</span></label>
-      </div>
+      <h2>ข้อมูลนักศึกษาใหม่</h2>
+      <input type="radio" name="utype" value="นักศึกษา" checked hidden>
       <label class="field"><span id="lblId">รหัสนักศึกษา</span><input type="text" id="fId" inputmode="text" maxlength="30"></label>
       <label class="field"><span>ชื่อ-สกุล</span><input type="text" id="fName" maxlength="80" placeholder="เช่น นายสมชาย ใจดี"></label>
       <label class="field"><span id="lblGroup">กลุ่มเรียน</span><input type="text" id="fGroup" maxlength="60" placeholder="เช่น ปวส.1 การบัญชี"></label>
@@ -296,7 +295,7 @@ dialog .field{margin:16px 0 6px}
         <button type="button" class="btn" id="btnCapture">เริ่มบันทึกใบหน้า</button>
         <button type="submit" class="btn primary" id="btnSave" disabled>บันทึกผู้ใช้</button>
       </div>
-      <p class="hint">ระบบจะถ่าย 3 มุม (มองตรง หันซ้าย หันขวา) ให้อยู่ในที่สว่าง ไม่สวมหมวกหรือแว่นดำ</p>
+      <p class="hint">กดปุ่ม “บันทึกภาพ” ทีละมุม (มองตรง หันซ้าย หันขวา) เมื่อพร้อม อยู่ในที่สว่าง ไม่สวมหมวกหรือแว่นดำ กดที่ภาพด้านล่างเพื่อถ่ายมุมนั้นใหม่</p>
     </form>
   </section>
 
@@ -323,13 +322,28 @@ dialog .field{margin:16px 0 6px}
 
 <dialog id="pinDlg" aria-labelledby="pinTitle">
   <form id="pinForm">
-    <h2 id="pinTitle">เข้าส่วนผู้ดูแล</h2>
-    <p class="hint">กรอกรหัสผู้ดูแลเพื่อลงทะเบียนผู้ใช้และดูรายงาน</p>
+    <h2 id="pinTitle">ลงชื่อเข้าใช้งาน</h2>
+    <p class="hint">สำหรับผู้ดูแลระบบ (Admin) กรอกรหัสเพื่อลงทะเบียนนักศึกษาและดูรายงาน</p>
     <label class="field"><span>รหัสผู้ดูแล</span><input type="password" id="pinInput" inputmode="numeric" autocomplete="off"></label>
     <p id="pinErr" class="msg bad" role="alert" hidden></p>
     <div class="actions" style="justify-content:flex-end;margin-top:14px">
       <button type="button" class="btn" id="pinCancel">ยกเลิก</button>
       <button type="submit" class="btn primary" id="pinOk">เข้าสู่ระบบ</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="editDlg" aria-labelledby="editTitle">
+  <form id="editForm">
+    <h2 id="editTitle">แก้ไขข้อมูลนักศึกษา</h2>
+    <p class="hint">การแก้ไขมีผลกับการเช็คชื่อครั้งต่อไป ประวัติเดิมในชีตไม่เปลี่ยน</p>
+    <label class="field"><span>รหัสนักศึกษา</span><input type="text" id="eId" maxlength="30"></label>
+    <label class="field"><span>ชื่อ-สกุล</span><input type="text" id="eName" maxlength="80"></label>
+    <label class="field"><span>กลุ่มเรียน</span><input type="text" id="eGroup" maxlength="60"></label>
+    <p id="editErr" class="msg bad" role="alert" hidden></p>
+    <div class="actions" style="justify-content:flex-end;margin-top:14px">
+      <button type="button" class="btn" id="editCancel">ยกเลิก</button>
+      <button type="submit" class="btn green" id="editOk">บันทึกการแก้ไข</button>
     </div>
   </form>
 </dialog>
@@ -342,10 +356,10 @@ dialog .field{margin:16px 0 6px}
 
 /* =====================  ค่าคงที่  ===================== */
 const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/model/';
-const CONFIRM_FRAMES = 2;     // ต้องเจอคนเดิมติดกันกี่เฟรมก่อนบันทึก
-const MIN_FACE = 0.14;        // ใบหน้าต้องกว้างอย่างน้อย 14% ของภาพ จึงจะนำมาเทียบ
-const UNKNOWN_FACE = 0.20;    // ใบหน้าที่ใหญ่พอจะแจ้งว่า "ไม่พบข้อมูล"
-const SCAN_INTERVAL = 200;    // ms
+const CONFIRM_FRAMES = 3;     // ต้องเจอคนเดิมติดกันกี่เฟรมก่อนบันทึก
+const MIN_FACE = 0.18;        // ใบหน้าต้องกว้างอย่างน้อย 14% ของภาพ จึงจะนำมาเทียบ
+const UNKNOWN_FACE = 0.22;    // ใบหน้าที่ใหญ่พอจะแจ้งว่า "ไม่พบข้อมูล"
+const SCAN_INTERVAL = 120;    // ms
 const STEPS = [
   { hint: 'มองตรงที่กล้อง', label: 'มองตรง' },
   { hint: 'หันหน้าไปทางซ้ายเล็กน้อย', label: 'หันซ้าย' },
@@ -508,9 +522,17 @@ async function loadModels() {
     faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
     faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
   ]);
+  // วอร์มอัป: รันโมเดลทุกตัวบนภาพเปล่า 1 ครั้ง ให้ GPU เตรียมพร้อมล่วงหน้า (ไม่เช่นนั้นการสแกนครั้งแรกจะช้าหลายวินาที)
+  try {
+    const c = document.createElement('canvas'); c.width = c.height = 160;
+    await faceapi.nets.tinyFaceDetector.locateFaces(c, detOpts(320));
+    await faceapi.nets.faceLandmark68Net.detectLandmarks(c);
+    await faceapi.nets.faceRecognitionNet.computeFaceDescriptor(c);
+  } catch (e) { console.warn('warm-up skipped', e); }
+  S.backend = faceapi.tf.getBackend();
   S.modelsReady = true;
 }
-const detOpts = (size) => new faceapi.TinyFaceDetectorOptions({ inputSize: size || 320, scoreThreshold: 0.5 });
+const detOpts = (size) => new faceapi.TinyFaceDetectorOptions({ inputSize: size || 320, scoreThreshold: 0.6 });
 
 function euclid(a, b) {
   let s = 0;
@@ -530,7 +552,7 @@ function matchFace(desc, excludeId, thr) {
     for (const f of u.f32) { const d = euclid(desc, f); if (d < m) m = d; }
     if (m < bestD) { second = bestD; bestD = m; best = u; } else if (m < second) { second = m; }
   }
-  if (best && bestD <= TH && (second - bestD) >= 0.03) return { user: best, dist: bestD };
+  if (best && bestD <= TH && (second - bestD) >= 0.04) return { user: best, dist: bestD };
   return null;
 }
 function nearestUser(desc, excludeId) {
@@ -612,7 +634,7 @@ async function scanFrame() {
   const v = camScan.video, vw = v.videoWidth;
   const dets = await faceapi.detectAllFaces(v, detOpts(320)).withFaceLandmarks().withFaceDescriptors();
   const faces = dets.filter(d => d.detection.box.width >= vw * MIN_FACE)
-    .sort((a, b) => b.detection.box.width - a.detection.box.width).slice(0, 6);
+    .sort((a, b) => b.detection.box.width - a.detection.box.width).slice(0, 4);
   const boxes = [], seen = new Set();
   let state = ['ready', 'พร้อมสแกน มองตรงที่กล้อง'], unknownBig = false;
 
@@ -675,16 +697,22 @@ function addChecked(r) {
   renderSide();
 }
 
+const RECENT_N = 5;   // จำนวนรายชื่อที่แสดงตอนย่อ
 function renderSide() {
   const total = S.users.length, done = S.checked.size;
   $('#cntDone').textContent = done;
   $('#cntAll').textContent = total;
   $('#cntBar').style.width = (total ? Math.min(100, done / total * 100) : 0) + '%';
-  const ol = $('#recent');
-  if (!S.recent.length) { ol.innerHTML = '<li class="empty">ยังไม่มีใครเช็คชื่อในกิจกรรมนี้</li>'; return; }
-  ol.innerHTML = S.recent.slice(0, 8).map(r =>
+  const ol = $('#recent'), btn = $('#btnMore'), n = S.recent.length;
+  if (!n) { ol.innerHTML = '<li class="empty">ยังไม่มีใครเช็คชื่อในกิจกรรมนี้</li>'; btn.hidden = true; ol.classList.remove('open'); return; }
+  const list = S.showAll ? S.recent : S.recent.slice(0, RECENT_N);
+  ol.classList.toggle('open', !!S.showAll);
+  ol.innerHTML = list.map(r =>
     '<li><span class="n">' + esc(r.name) + (r.group ? '<span class="g">' + esc(r.group) + '</span>' : '') + '</span><span class="tm num">' + esc(r.time.slice(0, 5)) + '</span></li>'
   ).join('');
+  btn.hidden = n <= RECENT_N;
+  btn.textContent = S.showAll ? 'ย่อรายชื่อ' : 'ดูทั้งหมด (' + n + ' คน)';
+  btn.setAttribute('aria-expanded', !!S.showAll);
 }
 
 async function refreshToday() {
@@ -699,10 +727,12 @@ async function refreshToday() {
 
 /* =====================  หน้าลงทะเบียน  ===================== */
 function renderSlots() {
+  const cur = curStep();
   $('#slots').innerHTML = STEPS.map((s, i) => {
     const f = S.regFaces[i];
-    return '<div class="slot' + (f ? ' done' : '') + '"><div class="im">' + (f ? '<img alt="ภาพใบหน้า ' + esc(s.label) + '" src="' + f.thumb + '">' : '') + '</div>' + esc(s.label) + '</div>';
+    return '<div class="slot' + (f ? ' done' : '') + (i === cur ? ' next' : '') + '" data-i="' + i + '" title="กดเพื่อถ่ายมุมนี้ใหม่"><div class="im">' + (f ? '<img alt="ภาพใบหน้า ' + esc(s.label) + '" src="' + f.thumb + '">' : '') + '</div>' + esc(s.label) + '</div>';
   }).join('');
+  $('#regInstr').textContent = cur >= 0 ? STEPS[cur].hint + ' แล้วกดปุ่ม “บันทึกภาพ”' : 'ครบ 3 มุมแล้ว ตรวจภาพด้านล่างแล้วกด “บันทึกผู้ใช้”';
 }
 
 function readForm() {
@@ -713,11 +743,14 @@ function readForm() {
     group: $('#fGroup').value.trim()
   };
 }
+function regDone() { return STEPS.every((s, i) => S.regFaces[i]); }
+// มุมที่จะถ่ายต่อไป: ถ้ากดเลือกภาพเพื่อถ่ายใหม่ใช้มุมนั้น ไม่เช่นนั้นใช้มุมแรกที่ยังไม่มีภาพ (-1 = ครบแล้ว)
+function curStep() { return S.regSel != null ? S.regSel : STEPS.findIndex((s, k) => !S.regFaces[k]); }
 function updateSave() {
-  const f = readForm();
-  $('#btnSave').disabled = !(f.id && f.name && $('#fConsent').checked && S.regFaces.length === STEPS.length && !S.capturing);
-  $('#btnCapture').disabled = S.capturing;
-  $('#btnCapture').textContent = S.regFaces.length ? 'ถ่ายใหม่' : 'เริ่มบันทึกใบหน้า';
+  const f = readForm(), st = curStep(), b = $('#btnCapture');
+  $('#btnSave').disabled = !(f.id && f.name && $('#fConsent').checked && regDone() && !S.capturing);
+  b.disabled = S.capturing;
+  b.textContent = S.capturing ? 'กำลังบันทึก…' : st >= 0 ? 'บันทึกภาพ: ' + STEPS[st].label + ' (' + (st + 1) + '/' + STEPS.length + ')' : 'ถ่ายใหม่ทั้งหมด';
 }
 function regMsg(text, kind) {
   const el = $('#regMsg');
@@ -742,7 +775,7 @@ async function grabOne() {
   if (dets.length === 0) { S.lastGrabMsg = 'ไม่พบใบหน้า ให้หน้าอยู่กลางภาพและอยู่ในที่สว่าง'; return null; }
   if (dets.length > 1) { S.lastGrabMsg = 'พบหลายใบหน้าในภาพ ให้เหลือเพียงคนเดียว'; return null; }
   const d = dets[0], b = d.detection.box;
-  if (b.width < v.videoWidth * 0.2) { S.lastGrabMsg = 'ใบหน้าเล็กเกินไป เข้าใกล้กล้องอีกนิด'; return null; }
+  if (b.width < v.videoWidth * 0.25) { S.lastGrabMsg = 'ใบหน้าเล็กเกินไป เข้าใกล้กล้องอีกนิด'; return null; }
   const c = document.createElement('canvas'); c.width = c.height = 120;
   const ctx = c.getContext('2d');
   const side = Math.max(b.width, b.height) * 1.5, cx = b.x + b.width / 2, cy = b.y + b.height / 2;
@@ -751,28 +784,35 @@ async function grabOne() {
   return { desc: Array.from(d.descriptor, x => Math.round(x * 10000) / 10000), thumb: c.toDataURL('image/jpeg', 0.7) };
 }
 
-async function captureSequence() {
+// ถ่ายหลายเฟรมติดกัน (สูงสุด 7 ครั้งเพื่อได้ 3 เฟรมที่ผ่านเกณฑ์) แล้วหาค่าเฉลี่ยของเวกเตอร์ใบหน้า
+async function grabAvg() {
+  S.lastGrabMsg = '';
+  const shots = [];
+  for (let t = 0; t < 7 && shots.length < 3; t++) {
+    const s = await grabOne();
+    if (s) shots.push(s);
+    await sleep(90);
+  }
+  if (shots.length < 2) return null;
+  const desc = Array.from({ length: 128 }, (_, i) => Math.round(shots.reduce((a, s) => a + s.desc[i], 0) / shots.length * 10000) / 10000);
+  return { desc, thumb: shots[0].thumb };
+}
+
+// กดปุ่ม "บันทึกภาพ" 1 ครั้ง = บันทึก 1 มุม (ถ้าครบ 3 มุมแล้ว ปุ่มจะกลายเป็น "ถ่ายใหม่ทั้งหมด")
+async function captureStep() {
   if (S.capturing) return;
+  const st = curStep();
+  if (st < 0) { S.regFaces = []; S.regSel = null; S.dupAck = false; regMsg(''); renderSlots(); updateSave(); return; }
   if (!camReg.on) { await startReg(); if (!camReg.on) return; }
-  S.capturing = true; S.regFaces = []; S.dupAck = false;
-  regMsg(''); renderSlots(); updateSave();
+  S.capturing = true; regMsg(''); updateSave();
   try {
-    for (let i = 0; i < STEPS.length; i++) {
-      $('#regInstr').textContent = STEPS[i].hint;
-      for (let c = 3; c >= 1; c--) { $('#regCount').textContent = c; await sleep(900); }
-      $('#regCount').textContent = '';
-      let shot = null;
-      for (let t = 0; t < 12 && !shot; t++) { shot = await grabOne(); if (!shot) await sleep(250); }
-      if (!shot) throw new Error(S.lastGrabMsg || 'ไม่พบใบหน้า');
-      S.regFaces.push(shot); renderSlots();
-    }
-    $('#regInstr').textContent = 'บันทึกใบหน้าครบแล้ว ตรวจสอบภาพด้านล่างแล้วกด “บันทึกผู้ใช้”';
+    const shot = await grabAvg();
+    if (!shot) throw new Error(S.lastGrabMsg || 'ไม่พบใบหน้า ลองอีกครั้ง');
+    S.regFaces[st] = shot; S.regSel = null; S.dupAck = false;
   } catch (e) {
-    S.regFaces = []; renderSlots();
-    $('#regInstr').textContent = 'บันทึกไม่สำเร็จ กด “เริ่มบันทึกใบหน้า” เพื่อลองใหม่';
     regMsg(cleanErr(e), 'bad');
   } finally {
-    S.capturing = false; $('#regCount').textContent = ''; updateSave();
+    S.capturing = false; renderSlots(); updateSave();
   }
 }
 
@@ -840,9 +880,9 @@ function renderAdmin() {
     head = ['รหัส', 'ชื่อ-สกุล', 'ประเภท', 'กลุ่ม/สังกัด'];
     rows = absent.filter(match).map(u => [u.id, u.name, u.type, u.group || '-']);
   } else {
-    head = ['รหัส', 'ชื่อ-สกุล', 'ประเภท', 'กลุ่ม/สังกัด', 'ภาพใบหน้า', ''];
+    head = ['รหัส', 'ชื่อ-สกุล', 'ประเภท', 'กลุ่ม/สังกัด', 'ภาพใบหน้า', 'จัดการ'];
     rows = S.adminUsers.filter(match).map(u => [u.id, u.name, u.type, u.group || '-', u.faceCount + ' ภาพ',
-      { html: '<button type="button" class="btn danger sm" data-del="' + esc(u.id) + '">ลบ</button>' }]);
+      { html: '<span class="rowact"><button type="button" class="btn green sm" data-edit="' + esc(u.id) + '">แก้ไข</button><button type="button" class="btn danger sm" data-del="' + esc(u.id) + '">ลบ</button></span>' }]);
   }
   if (!rows.length) {
     $('#adminBody').innerHTML = '<p class="empty" style="padding:20px">' + (S.tab === 'absent' && S.adminUsers.length ? 'ทุกคนเช็คชื่อครบแล้ว' : 'ไม่พบข้อมูล') + '</p>';
@@ -850,6 +890,32 @@ function renderAdmin() {
   }
   $('#adminBody').innerHTML = '<table><thead><tr>' + head.map(h => '<th scope="col">' + esc(h) + '</th>').join('') + '</tr></thead><tbody>' +
     rows.map(r => '<tr>' + r.map(c => '<td class="num">' + (c && c.html ? c.html : esc(c)) + '</td>').join('') + '</tr>').join('') + '</tbody></table>';
+}
+
+let editing = null;   // ผู้ใช้ที่กำลังแก้ไขในหน้าต่างแก้ไข
+function openEdit(id) {
+  const u = S.adminUsers.find(x => x.id === id);
+  if (!u) return;
+  editing = u;
+  $('#eId').value = u.id; $('#eName').value = u.name; $('#eGroup').value = u.group;
+  $('#editErr').hidden = true;
+  $('#editDlg').showModal();
+}
+async function saveEdit(ev) {
+  ev.preventDefault();
+  const id = $('#eId').value.trim(), name = $('#eName').value.trim(), group = $('#eGroup').value.trim();
+  const err = $('#editErr'), ok = $('#editOk');
+  if (!id || !name) { err.textContent = 'กรอกรหัสและชื่อ-สกุลให้ครบ'; err.hidden = false; return; }
+  ok.disabled = true; ok.textContent = 'กำลังบันทึก…';
+  try {
+    const old = editing.id;
+    await gs('updateUser', S.pin, old, { id, name, type: editing.type, group });
+    Object.assign(editing, { id, name, group });
+    const cu = S.users.find(x => x.id === old);      // อัปเดตรายชื่อที่ใช้สแกนบนเครื่องนี้ด้วย
+    if (cu) Object.assign(cu, { id, name, group });
+    $('#editDlg').close(); toast('แก้ไขข้อมูลเรียบร้อย', 'ok'); renderAdmin();
+  } catch (e) { err.textContent = cleanErr(e); err.hidden = false; }
+  finally { ok.disabled = false; ok.textContent = 'บันทึกการแก้ไข'; }
 }
 
 async function onDelete(btn) {
@@ -870,6 +936,8 @@ async function onDelete(btn) {
 
 /* =====================  สลับหน้า / PIN  ===================== */
 async function go(view) {
+  if (view === 'login') { S.pendingView = ''; openPin(); return; }
+  if (view === 'logout') { doLogout(); return; }
   if ((view === 'register' || view === 'admin') && !S.pin) { S.pendingView = view; openPin(); return; }
   S.view = view;
   $$('.view').forEach(v => v.hidden = v.id !== 'view-' + view);
@@ -882,6 +950,17 @@ async function go(view) {
   } else {
     camScan.stop(); camReg.stop(); loadAdmin();
   }
+}
+
+// แสดง/ซ่อนเมนูผู้ดูแลตามสถานะล็อกอิน
+function renderNav() {
+  const on = !!S.pin;
+  $('#navLogin').hidden = on;
+  $$('.nav .adm').forEach(b => b.hidden = !on);
+}
+function doLogout() {
+  S.pin = ''; S.adminUsers = []; S.report = []; S.regFaces = []; S.regSel = null;
+  renderNav(); toast('ออกจากระบบแล้ว', 'ok'); go('scan');
 }
 
 function openPin() {
@@ -923,7 +1002,9 @@ function bind() {
     S.dupAck = false; updateSave();
   }));
   ['#fId', '#fName', '#fGroup', '#fConsent'].forEach(s => $(s).addEventListener('input', () => { S.dupAck = false; updateSave(); }));
-  $('#btnCapture').addEventListener('click', captureSequence);
+  $('#btnCapture').addEventListener('click', captureStep);
+  $('#slots').addEventListener('click', e => { const s = e.target.closest('.slot'); if (!s || S.capturing) return; S.regSel = +s.dataset.i; renderSlots(); updateSave(); });
+  $('#btnMore').addEventListener('click', () => { S.showAll = !S.showAll; renderSide(); });
   $('#regForm').addEventListener('submit', saveUser);
 
   // รายงาน
@@ -932,7 +1013,12 @@ function bind() {
   $('#btnRefresh').addEventListener('click', loadAdmin);
   $('#qAdmin').addEventListener('input', renderAdmin);
   $('#segAdmin').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { S.tab = b.dataset.tab; renderAdmin(); } });
-  $('#adminBody').addEventListener('click', e => { const b = e.target.closest('[data-del]'); if (b) onDelete(b); });
+  $('#adminBody').addEventListener('click', e => {
+    const d = e.target.closest('[data-del]'), ed = e.target.closest('[data-edit]');
+    if (d) onDelete(d); else if (ed) openEdit(ed.dataset.edit);
+  });
+  $('#editForm').addEventListener('submit', saveEdit);
+  $('#editCancel').addEventListener('click', () => $('#editDlg').close());
 
   // PIN
   $('#pinCancel').addEventListener('click', () => $('#pinDlg').close());
@@ -944,7 +1030,7 @@ function bind() {
     try {
       const r = await gs('verifyPin', pin);
       if (r.ok) {
-        S.pin = pin; $('#lnkSheet').href = r.sheetUrl;
+        S.pin = pin; $('#lnkSheet').href = r.sheetUrl; renderNav();
         $('#pinDlg').close();
         const v = S.pendingView || 'register'; S.pendingView = '';
         go(v);
@@ -961,12 +1047,13 @@ function bind() {
 function checkReady() {
   if (S.modelsReady && S.dataReady) {
     $('#btnStart').disabled = false;
-    $('#startNote').textContent = 'กดปุ่มเพื่อเปิดกล้อง แล้วให้ทุกคนมองตรงที่กล้องทีละคน หรือหลายคนพร้อมกันก็ได้';
+    $('#startNote').textContent = 'กดปุ่มเพื่อเปิดกล้อง แล้วให้ทุกคนมองตรงที่กล้องทีละคน หรือหลายคนพร้อมกันก็ได้' + (S.backend && S.backend !== 'webgl' ? ' (หมายเหตุ: เครื่องนี้ประมวลผลด้วย CPU อาจสแกนช้า ลองใช้ Chrome และเปิด Hardware acceleration)' : '');
     camScan.setPill('ready', 'พร้อมเริ่มสแกน');
   }
 }
 
 (async function init() {
+  $('#fav').href = $('#logoImg').src;
   bind(); tickClock(); setInterval(tickClock, 1000);
   renderSlots(); renderSide();
   loadModels().then(checkReady).catch(e => {
@@ -984,6 +1071,7 @@ function checkReady() {
     S.activity = b.activities[0] || 'เช็คชื่อ';
     const opts = b.activities.map(a => '<option>' + esc(a) + '</option>').join('');
     $('#selActivity').innerHTML = opts; $('#repAct').innerHTML = opts;
+    if (b.activities.length === 1) { $('#selActivity').hidden = true; $('#actFixed').hidden = false; $('#actFixed').textContent = b.activities[0]; }
     setUsers(b.users);
     S.dataReady = true;
     renderSide(); refreshToday(); checkReady();
