@@ -175,6 +175,7 @@ dialog .field{margin:16px 0 6px}
 
 .btn.green{background:var(--ok);border-color:var(--ok);color:#fff}
 .btn.green:hover{background:#0b6146;border-color:#0b6146}
+.icon-btn.txt{display:flex;align-items:center;width:auto;padding:0 14px;gap:6px;border-radius:20px;font-size:.875rem}
 .rowact{display:flex;gap:8px}
 .nav{overflow-x:auto}
 .nav button{white-space:nowrap}
@@ -235,9 +236,7 @@ dialog .field{margin:16px 0 6px}
           <button type="button" class="icon-btn" id="btnSound" aria-pressed="true" aria-label="เสียงแจ้งเตือน" title="เสียงแจ้งเตือน">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
           </button>
-          <button type="button" class="icon-btn" id="btnFlipScan" aria-label="สลับกล้อง" title="สลับกล้อง">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg>
-          </button>
+          <button type="button" class="icon-btn txt" id="btnRefreshScan" title="รีเฟรชการตรวจจับ" aria-label="รีเฟรชการตรวจจับ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg><span>รีเฟรช</span></button>
         </div>
         <div class="start" id="startScan">
           <button type="button" class="btn primary big" id="btnStart" disabled>เปิดกล้องเพื่อเริ่มสแกน</button>
@@ -253,6 +252,7 @@ dialog .field{margin:16px 0 6px}
         <div class="date" id="dateTh"></div>
       </div>
       <div class="field"><span>กิจกรรมที่กำลังเช็คชื่อ</span><select id="selActivity"></select><div class="actfix" id="actFixed" hidden></div></div>
+      <label class="field" id="camField" hidden><span>กล้องที่ใช้งาน</span><select id="selCam"></select></label>
       <div class="counter">
         <div class="row"><span>เช็คชื่อแล้ว</span><span><b class="num" id="cntDone">0</b> จาก <span class="num" id="cntAll">0</span> คน</span></div>
         <div class="bar" aria-hidden="true"><i id="cntBar"></i></div>
@@ -284,16 +284,17 @@ dialog .field{margin:16px 0 6px}
     </div>
 
     <form class="panel" id="regForm" autocomplete="off" novalidate>
-      <h2>ข้อมูลนักศึกษาใหม่</h2>
+      <h2 id="regTitle">ข้อมูลนักศึกษาใหม่</h2>
       <input type="radio" name="utype" value="นักศึกษา" checked hidden>
       <label class="field"><span id="lblId">รหัสนักศึกษา</span><input type="text" id="fId" inputmode="text" maxlength="30"></label>
       <label class="field"><span>ชื่อ-สกุล</span><input type="text" id="fName" maxlength="80" placeholder="เช่น นายสมชาย ใจดี"></label>
       <label class="field"><span id="lblGroup">กลุ่มเรียน</span><input type="text" id="fGroup" maxlength="60" placeholder="เช่น ปวส.1 การบัญชี"></label>
-      <label class="check"><input type="checkbox" id="fConsent"><span>เจ้าของใบหน้ายินยอมให้เก็บข้อมูลใบหน้าเพื่อใช้เช็คชื่อเท่านั้น</span></label>
+      <label class="check" id="consentRow"><input type="checkbox" id="fConsent"><span>เจ้าของใบหน้ายินยอมให้เก็บข้อมูลใบหน้าเพื่อใช้เช็คชื่อเท่านั้น</span></label>
       <div id="regMsg" class="msg" hidden></div>
       <div class="actions">
         <button type="button" class="btn" id="btnCapture">เริ่มบันทึกใบหน้า</button>
         <button type="submit" class="btn primary" id="btnSave" disabled>บันทึกผู้ใช้</button>
+        <button type="button" class="btn" id="btnCancelFace" hidden>ยกเลิก</button>
       </div>
       <p class="hint">กดปุ่ม “บันทึกภาพ” ทีละมุม (มองตรง หันซ้าย หันขวา) เมื่อพร้อม อยู่ในที่สว่าง ไม่สวมหมวกหรือแว่นดำ กดที่ภาพด้านล่างเพื่อถ่ายมุมนั้นใหม่</p>
     </form>
@@ -342,6 +343,7 @@ dialog .field{margin:16px 0 6px}
     <label class="field"><span>กลุ่มเรียน</span><input type="text" id="eGroup" maxlength="60"></label>
     <p id="editErr" class="msg bad" role="alert" hidden></p>
     <div class="actions" style="justify-content:flex-end;margin-top:14px">
+      <button type="button" class="btn" id="editFace" style="margin-right:auto">ถ่ายใบหน้าใหม่</button>
       <button type="button" class="btn" id="editCancel">ยกเลิก</button>
       <button type="submit" class="btn green" id="editOk">บันทึกการแก้ไข</button>
     </div>
@@ -454,7 +456,13 @@ class Cam {
     }
     const base = { width: { ideal: 960 }, height: { ideal: 720 } };
     const video = this.deviceId ? Object.assign({}, base, { deviceId: { exact: this.deviceId } }) : Object.assign({}, base, { facingMode: this.facing });
-    this.stream = await navigator.mediaDevices.getUserMedia({ audio: false, video });
+    try {
+      this.stream = await navigator.mediaDevices.getUserMedia({ audio: false, video });
+    } catch (e) {
+      if (!this.deviceId || (e.name !== 'OverconstrainedError' && e.name !== 'NotFoundError')) throw e;
+      this.deviceId = null;   // กล้องที่เลือกไว้หายไป → ใช้กล้องเริ่มต้นแทน
+      this.stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: Object.assign({}, base, { facingMode: this.facing }) });
+    }
     this.video.srcObject = this.stream;
     await this.video.play();
     if (!this.video.videoWidth) await new Promise(r => this.video.addEventListener('loadedmetadata', r, { once: true }));
@@ -613,7 +621,8 @@ async function startScan() {
     $('#startScan').hidden = true;
     S.scanStarted = true;
     camScan.setPill('ready', 'พร้อมสแกน มองตรงที่กล้อง');
-    if (!S.loopOn) { S.loopOn = true; scanLoop(); }
+    if (!S.loopOn) startLoop();
+    refreshCams();
   } catch (e) {
     $('#startScan').hidden = false;
     note.className = 'err';
@@ -623,11 +632,75 @@ async function startScan() {
   }
 }
 
-async function scanLoop() {
+// เริ่มลูปสแกนใหม่ (gen = รุ่นของลูป ลูปรุ่นเก่าที่ค้างอยู่จะหยุดเองเมื่อเจอว่าไม่ใช่รุ่นล่าสุด)
+function startLoop() {
+  S.loopGen = (S.loopGen || 0) + 1;
+  S.loopOn = true; S.lastLoop = Date.now(); S.lastT = -1; S.tChange = Date.now(); S.errCount = 0;
+  scanLoop(S.loopGen);
+}
+
+async function scanLoop(gen) {
+  if (gen !== S.loopGen) return;
   if (S.view !== 'scan' || !camScan.on) { S.loopOn = false; return; }
   const t0 = performance.now();
-  try { if (camScan.video.readyState >= 2) await scanFrame(); } catch (e) { console.error(e); }
-  setTimeout(scanLoop, Math.max(0, SCAN_INTERVAL - (performance.now() - t0)));
+  S.lastLoop = Date.now();
+  try {
+    if (camScan.video.readyState >= 2) { await scanFrame(); S.errCount = 0; }
+  } catch (e) { console.error(e); S.errCount = (S.errCount || 0) + 1; }
+  if (gen !== S.loopGen) return;
+
+  // เฝ้าระวัง: กล้องหลุด / ภาพนิ่งค้างเกิน 5 วินาที / error ติดต่อกัน 5 รอบ → รีเฟรชอัตโนมัติ
+  const tr = camScan.stream && camScan.stream.getVideoTracks()[0], ct = camScan.video.currentTime;
+  if (ct !== S.lastT || document.hidden) { S.lastT = ct; S.tChange = Date.now(); }
+  if (!S.resetting && (!tr || tr.readyState === 'ended' || S.errCount >= 5 || Date.now() - S.tChange > 5000)) { resetDetection(); return; }
+  setTimeout(() => scanLoop(gen), Math.max(0, SCAN_INTERVAL - (performance.now() - t0)));
+}
+
+// ตัวเฝ้าระวังอีกชั้น: ถ้าลูปสแกน "ค้างทั้งรอบ" (ไม่เดินต่อเกิน 12 วินาที) ให้รีเฟรช
+function watchdog() {
+  if (S.view === 'scan' && camScan.on && !S.resetting && document.visibilityState === 'visible' && S.lastLoop && Date.now() - S.lastLoop > 12000) resetDetection();
+}
+
+// รีเฟรชการตรวจจับ: เปิดกล้องใหม่ + ล้างสถานะ + ทดสอบว่าตัวตรวจจับยังตอบสนอง
+// ถ้าตัวตรวจจับค้างจริง (เช่น GPU หลุด) จะโหลดหน้าเว็บใหม่ให้อัตโนมัติ ไม่ต้องกด F5 เอง
+async function resetDetection() {
+  if (S.resetting) return;
+  S.resetting = true;
+  try {
+    camScan.setPill('busy', 'กำลังรีเฟรชการตรวจจับ…');
+    S.streak = {}; S.cool = {}; S.unkFrames = 0;
+    camScan.stop();
+    await camScan.start();
+    const ok = await Promise.race([faceapi.detectAllFaces(camScan.video, detOpts(320)).then(() => true), sleep(8000).then(() => false)]);
+    if (!ok) throw new Error('engine stuck');
+    camScan.setPill('ready', 'พร้อมสแกน มองตรงที่กล้อง');
+    startLoop(); refreshCams();
+  } catch (e) {
+    console.error(e);
+    if (e && e.message === 'engine stuck') { toast('ตัวตรวจจับค้าง กำลังโหลดหน้าเว็บใหม่…', 'bad'); setTimeout(() => location.reload(), 1200); }
+    else { camScan.setPill('warn', 'เปิดกล้องไม่สำเร็จ กดรีเฟรชอีกครั้ง'); toast(camErrorText(e), 'bad'); }
+  } finally { S.resetting = false; }
+}
+
+// รายชื่อกล้องในเครื่อง (ช่องเลือกกล้องจะโชว์เมื่อมีกล้องตั้งแต่ 2 ตัวขึ้นไป)
+async function refreshCams() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+  const devs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'videoinput');
+  const cur = camScan.stream ? (camScan.stream.getVideoTracks()[0].getSettings().deviceId || '') : '';
+  S.camIds = devs.map(d => d.deviceId);
+  $('#selCam').innerHTML = devs.map((d, i) => '<option value="' + esc(d.deviceId) + '">' + esc(d.label || 'กล้อง ' + (i + 1)) + '</option>').join('');
+  if (cur && S.camIds.includes(cur)) $('#selCam').value = cur;
+  $('#camField').hidden = devs.length < 2;
+}
+
+// เสียบ/ถอดกล้อง USB ขณะใช้งาน: อัปเดตรายการทันที ถ้ากล้องที่ใช้อยู่ถูกถอดจะสลับไปกล้องอื่นเอง
+async function onDeviceChange() {
+  const before = S.camIds || [];
+  await refreshCams();
+  if (S.view !== 'scan' || !S.scanStarted) return;
+  const cur = camScan.stream ? camScan.stream.getVideoTracks()[0].getSettings().deviceId : '';
+  if (cur && !S.camIds.includes(cur)) { camScan.deviceId = null; toast('กล้องที่ใช้อยู่ถูกถอดออก กำลังสลับไปกล้องอื่น', 'bad'); resetDetection(); }
+  else if (S.camIds.length > before.length) toast('พบกล้องใหม่ เลือกใช้ได้ที่ช่อง “กล้องที่ใช้งาน”', 'ok');
 }
 
 async function scanFrame() {
@@ -816,8 +889,52 @@ async function captureStep() {
   }
 }
 
+// โหมด "ถ่ายใบหน้าใหม่": ล็อกช่องข้อมูล ซ่อนช่องยินยอม (ให้ความยินยอมไปแล้วตอนลงทะเบียน) เปลี่ยนป้ายปุ่ม
+function applyRegMode() {
+  const on = !!S.faceEditId, u = on ? S.adminUsers.find(x => x.id === S.faceEditId) : null;
+  $('#regTitle').textContent = on ? 'ถ่ายใบหน้าใหม่: ' + (u ? u.name : S.faceEditId) : 'ข้อมูลนักศึกษาใหม่';
+  ['#fId', '#fName', '#fGroup'].forEach(s => $(s).disabled = on);
+  if (on && u) { $('#fId').value = u.id; $('#fName').value = u.name; $('#fGroup').value = u.group; }
+  $('#consentRow').hidden = on;
+  $('#fConsent').checked = on;
+  $('#btnSave').textContent = on ? 'บันทึกใบหน้าใหม่' : 'บันทึกผู้ใช้';
+  $('#btnCancelFace').hidden = !on;
+}
+function startFaceEdit(id) {
+  if (!S.adminUsers.some(x => x.id === id)) return;
+  $('#editDlg').close();
+  S.faceEditId = id; S.regFaces = []; S.regSel = null; S.dupAck = false;
+  applyRegMode(); regMsg('');
+  go('register', true);
+}
+function exitFaceEdit() {
+  S.faceEditId = null; S.regFaces = []; S.regSel = null; S.dupAck = false;
+  ['#fId', '#fName', '#fGroup'].forEach(s => $(s).value = '');
+  applyRegMode(); regMsg('');
+}
+async function saveFaceOnly() {
+  const id = S.faceEditId;
+  const dup = nearestUser(Float32Array.from(S.regFaces[0].desc), id);
+  if (dup && !S.dupAck) {
+    S.dupAck = true;
+    regMsg('ใบหน้านี้คล้ายกับ ' + dup.name + ' (รหัส ' + dup.id + ') ถ้าแน่ใจว่าเป็นคนละคน กด “บันทึกใบหน้าใหม่” อีกครั้งเพื่อยืนยัน', 'warn');
+    return;
+  }
+  const btn = $('#btnSave'); btn.disabled = true; btn.textContent = 'กำลังบันทึก…';
+  try {
+    const faces = S.regFaces.map(x => x.desc), f32 = faces.map(a => new Float32Array(a));
+    await gs('updateFaces', S.pin, id, faces);
+    const u = S.adminUsers.find(x => x.id === id), cu = S.users.find(x => x.id === id);
+    if (cu) Object.assign(cu, { faces, f32 }); else if (u) S.users.push(Object.assign({}, u, { faces, f32 }));
+    if (u) u.faceCount = faces.length;
+    toast('บันทึกใบหน้าใหม่เรียบร้อย', 'ok');
+    exitFaceEdit(); go('admin');
+  } catch (e) { regMsg(cleanErr(e), 'bad'); btn.textContent = 'บันทึกใบหน้าใหม่'; updateSave(); }
+}
+
 async function saveUser(ev) {
   ev.preventDefault();
+  if (S.faceEditId) { saveFaceOnly(); return; }
   const f = readForm();
   if (!f.id || !f.name) { regMsg('กรอกรหัสและชื่อ-สกุลให้ครบ', 'bad'); return; }
   if (S.users.some(u => u.id === f.id)) { regMsg('รหัส ' + f.id + ' ลงทะเบียนไว้แล้ว', 'bad'); return; }
@@ -850,7 +967,7 @@ async function loadAdmin() {
   if (!$('#repDate').value) $('#repDate').value = S.today;
   $('#adminBody').innerHTML = '<p class="empty" style="padding:20px"><span class="spin"></span>กำลังโหลดข้อมูล…</p>';
   try {
-    const date = $('#repDate').value, act = $('#repAct').value;
+    const date = $('#repDate').value, act = S.activities.length === 1 ? '' : $('#repAct').value;
     const [users, rep] = await Promise.all([gs('adminListUsers', S.pin), gs('getReport', S.pin, date, act)]);
     S.adminUsers = users; S.report = rep.rows;
     renderAdmin();
@@ -935,9 +1052,10 @@ async function onDelete(btn) {
 }
 
 /* =====================  สลับหน้า / PIN  ===================== */
-async function go(view) {
+async function go(view, keep) {
   if (view === 'login') { S.pendingView = ''; openPin(); return; }
   if (view === 'logout') { doLogout(); return; }
+  if (S.faceEditId && !(view === 'register' && keep)) exitFaceEdit();   // ออกจากหน้าลงทะเบียน = ยกเลิกโหมดถ่ายใบหน้าใหม่
   if ((view === 'register' || view === 'admin') && !S.pin) { S.pendingView = view; openPin(); return; }
   S.view = view;
   $$('.view').forEach(v => v.hidden = v.id !== 'view-' + view);
@@ -985,7 +1103,9 @@ function bind() {
     $('#startNote').className = ''; $('#startNote').textContent = 'กำลังเปิดกล้อง…';
     await startScan();
   });
-  $('#btnFlipScan').addEventListener('click', async () => { try { await camScan.flip(); } catch (e) { toast(camErrorText(e), 'bad'); } });
+  $('#btnRefreshScan').addEventListener('click', () => { if (S.scanStarted) resetDetection(); else if (!$('#btnStart').disabled) startScan(); });
+  $('#selCam').addEventListener('change', e => { camScan.deviceId = e.target.value || null; resetDetection(); });
+  if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) navigator.mediaDevices.addEventListener('devicechange', onDeviceChange);
   $('#btnFlipReg').addEventListener('click', async () => { try { await camReg.flip(); } catch (e) { toast(camErrorText(e), 'bad'); } });
   $('#btnSound').addEventListener('click', e => {
     S.sound = !S.sound; e.currentTarget.setAttribute('aria-pressed', S.sound);
@@ -1019,6 +1139,8 @@ function bind() {
   });
   $('#editForm').addEventListener('submit', saveEdit);
   $('#editCancel').addEventListener('click', () => $('#editDlg').close());
+  $('#editFace').addEventListener('click', () => startFaceEdit(editing.id));
+  $('#btnCancelFace').addEventListener('click', () => { exitFaceEdit(); go('admin'); });
 
   // PIN
   $('#pinCancel').addEventListener('click', () => $('#pinDlg').close());
@@ -1054,7 +1176,7 @@ function checkReady() {
 
 (async function init() {
   $('#fav').href = $('#logoImg').src;
-  bind(); tickClock(); setInterval(tickClock, 1000);
+  bind(); tickClock(); setInterval(tickClock, 1000); setInterval(watchdog, 4000);
   renderSlots(); renderSide();
   loadModels().then(checkReady).catch(e => {
     $('#startNote').className = 'err';
@@ -1071,7 +1193,7 @@ function checkReady() {
     S.activity = b.activities[0] || 'เช็คชื่อ';
     const opts = b.activities.map(a => '<option>' + esc(a) + '</option>').join('');
     $('#selActivity').innerHTML = opts; $('#repAct').innerHTML = opts;
-    if (b.activities.length === 1) { $('#selActivity').hidden = true; $('#actFixed').hidden = false; $('#actFixed').textContent = b.activities[0]; }
+    if (b.activities.length === 1) { $('#selActivity').hidden = true; $('#actFixed').hidden = false; $('#actFixed').textContent = b.activities[0]; $('#repAct').closest('.field').hidden = true; }
     setUsers(b.users);
     S.dataReady = true;
     renderSide(); refreshToday(); checkReady();
