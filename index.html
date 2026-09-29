@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ระบบเช็คชื่อด้วยใบหน้า</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1D2447;
+  --flag-red:#A51931;
+  --flag-blue:#2D2A4A;
+  --paper:#F3F4F9;
+  --surface:#FFFFFF;
+  --line:#D8DBE9;
+  --muted:#586080;
+  --ok:#0F7A55;
+  --warn:#8A5300;
+  --warn-bg:#FFE3A8;
+  --bad:#B3261E;
+  --focus:#2456D6;
+  --stage:#101633;
+  --font:'IBM Plex Sans Thai','Noto Sans Thai',Tahoma,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.6 var(--font)}
+h1,h2,h3,p{margin:0}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- header ---------- */
+.flagline{height:6px;background:linear-gradient(90deg,var(--flag-red) 0 16.66%,#fff 0 33.33%,var(--flag-blue) 0 66.66%,#fff 0 83.33%,var(--flag-red) 0)}
+.top{background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{max-width:1180px;margin:0 auto;padding:12px 20px 0;display:flex;align-items:flex-end;justify-content:space-between;gap:12px 24px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px;min-width:0;padding-bottom:12px}
+.mark{width:44px;height:44px;flex:none;border-radius:10px;overflow:hidden}
+.mark img{width:100%;height:100%;object-fit:contain;display:block}
+.college{font-size:1.05rem;font-weight:700;line-height:1.3}
+.campus{font-size:.875rem;color:var(--muted);line-height:1.3}
+.nav{display:flex;gap:2px}
+.nav button{border:0;background:none;color:var(--muted);padding:10px 16px 12px;font-weight:500;cursor:pointer;border-bottom:3px solid transparent}
+.nav button:hover{color:var(--ink)}
+.nav button[aria-current="page"]{color:var(--ink);font-weight:600;border-bottom-color:var(--flag-red)}
+
+main{max-width:1180px;margin:0 auto;padding:24px 20px 56px}
+.view{display:grid;gap:24px;align-items:start}
+.scan{grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr)}
+.reg{grid-template-columns:minmax(0,1.25fr) minmax(320px,1fr)}
+
+/* ---------- camera stage ---------- */
+.stage{position:relative;background:var(--stage);border-radius:20px;overflow:hidden;aspect-ratio:4/3;isolation:isolate}
+.mirror{position:absolute;inset:0}
+.stage:not(.unmirror) .mirror{transform:scaleX(-1)}
+.mirror video,.mirror canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.brackets i{position:absolute;width:34px;height:34px;border:3px solid rgba(255,255,255,.8);pointer-events:none}
+.brackets i:nth-child(1){top:18px;left:18px;border-right:0;border-bottom:0;border-top-left-radius:10px}
+.brackets i:nth-child(2){top:18px;right:18px;border-left:0;border-bottom:0;border-top-right-radius:10px}
+.brackets i:nth-child(3){bottom:18px;left:18px;border-right:0;border-top:0;border-bottom-left-radius:10px}
+.brackets i:nth-child(4){bottom:18px;right:18px;border-left:0;border-top:0;border-bottom-right-radius:10px}
+.pill{position:absolute;top:16px;left:16px;display:flex;align-items:center;gap:8px;max-width:calc(100% - 120px);padding:6px 14px 6px 12px;border-radius:999px;background:rgba(16,22,51,.78);color:#fff;font-size:.875rem}
+.pill .dot{width:9px;height:9px;border-radius:50%;background:#9aa3c7;flex:none}
+.pill[data-s="ready"] .dot{background:#38d39f}
+.pill[data-s="ok"] .dot{background:#38d39f}
+.pill[data-s="warn"] .dot{background:#ffc247}
+.pill[data-s="busy"] .dot{background:#8fb0ff}
+.stage-tools{position:absolute;top:12px;right:12px;display:flex;gap:8px}
+.icon-btn{width:40px;height:40px;border-radius:50%;border:0;background:rgba(16,22,51,.78);color:#fff;display:grid;place-items:center;cursor:pointer}
+.icon-btn[aria-pressed="false"]{opacity:.55}
+.icon-btn svg{width:20px;height:20px}
+.start{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;background:rgba(16,22,51,.9);color:#fff}
+.start p{max-width:36ch;color:#c9cfe8;font-size:.95rem}
+.start .err{color:#ffb4ab}
+
+.result{position:absolute;z-index:2;left:12px;right:12px;bottom:12px;display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:14px 20px 14px 16px;border-radius:14px;color:#fff;background:var(--ok);visibility:hidden;opacity:0;transform:translateY(14px);transition:opacity .22s,transform .22s,visibility .22s}
+.result.show{visibility:visible;opacity:1;transform:none}
+.result.dup{background:var(--warn-bg);color:#3c2500}
+.result.bad{background:var(--bad)}
+.result .ico{width:44px;height:44px}
+.result .lbl{font-size:.875rem;font-weight:500;opacity:.92}
+.result .who{font-size:1.5rem;font-weight:700;line-height:1.25;overflow-wrap:anywhere}
+.result .sub{font-size:.9rem;opacity:.92}
+.result .t{font-size:1.9rem;font-weight:600;line-height:1}
+.result.bad .t{display:none}
+
+/* ---------- side panel ---------- */
+.side{display:flex;flex-direction:column;gap:22px}
+.clock .time{font-size:3.25rem;font-weight:600;line-height:1.1;letter-spacing:-.01em}
+.clock .date{color:var(--muted)}
+.field{display:flex;flex-direction:column;gap:6px}
+.field>span{font-size:.9rem;font-weight:600}
+.field input[type=text],.field input[type=password],.field input[type=date],.field select{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff}
+.field input:focus,.field select:focus{border-color:var(--flag-blue)}
+.counter .row{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.counter b{font-size:1.9rem;font-weight:700;line-height:1.2}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;width:0;background:var(--ok);transition:width .4s}
+.side h2,.panel h2{font-size:1rem;font-weight:700}
+.recent{list-style:none;margin:8px 0 0;padding:0}
+.recent li{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.recent .n{font-weight:500;min-width:0;overflow-wrap:anywhere}
+.recent .g{display:block;font-size:.85rem;color:var(--muted)}
+.recent .tm{color:var(--muted);flex:none}
+.empty{color:var(--muted);padding:12px 0}
+
+/* ---------- buttons / forms ---------- */
+.btn{border:1.5px solid var(--line);background:#fff;padding:11px 20px;border-radius:10px;font-weight:600;cursor:pointer}
+.btn:hover{border-color:var(--flag-blue)}
+.btn.primary{background:var(--flag-blue);border-color:var(--flag-blue);color:#fff}
+.btn.primary:hover{background:#3b3762}
+.btn.big{padding:14px 28px;font-size:1.05rem;border-radius:12px}
+.btn.danger{color:var(--bad);border-color:#e6b8b4}
+.btn.danger.armed{background:var(--bad);color:#fff;border-color:var(--bad)}
+.btn.sm{padding:6px 12px;font-size:.875rem;font-weight:500}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:16px}
+.seg{display:inline-flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.seg button,.seg label{border:0;background:none;padding:8px 16px;cursor:pointer;font-weight:500;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--flag-blue);color:#fff}
+.seg label{display:block}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg input:checked+span{color:#fff}
+.seg label:has(input:checked){background:var(--flag-blue);color:#fff}
+.seg label:has(input:focus-visible){outline:3px solid var(--focus);outline-offset:-3px}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:.925rem}
+.check input{width:20px;height:20px;margin-top:3px;flex:none}
+.msg{padding:10px 14px;border-radius:10px;font-size:.925rem}
+.msg.warn{background:var(--warn-bg);color:#3c2500}
+.msg.bad{background:#FCE8E6;color:#7d1a14}
+.msg.ok{background:#E3F4EC;color:#0b4f38}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+
+/* ---------- register ---------- */
+.count{position:absolute;inset:0;z-index:2;display:grid;place-items:center;font-size:7rem;font-weight:600;color:#fff;text-shadow:0 2px 24px rgba(0,0,0,.55);pointer-events:none}
+.instr{position:absolute;z-index:2;left:12px;right:12px;bottom:12px;padding:12px 16px;border-radius:12px;background:rgba(16,22,51,.82);color:#fff;text-align:center;font-weight:500}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.slot{text-align:center;font-size:.875rem;color:var(--muted)}
+.slot .im{aspect-ratio:1;border-radius:12px;border:2px dashed var(--line);background:#fff;display:grid;place-items:center;overflow:hidden;margin-bottom:6px}
+.slot .im img{width:100%;height:100%;object-fit:cover;display:block}
+.slot.done .im{border:2px solid var(--ok)}
+.slot.done{color:var(--ok);font-weight:600}
+.hint{font-size:.9rem;color:var(--muted)}
+
+/* ---------- admin ---------- */
+.admin{display:block}
+.toolbar{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:flex-end;margin-bottom:16px}
+.toolbar .field{min-width:180px}
+.stats{display:flex;gap:28px;flex-wrap:wrap;margin:4px 0 18px}
+.stats div{display:flex;flex-direction:column}
+.stats b{font-size:1.6rem;font-weight:700;line-height:1.2}
+.stats span{font-size:.875rem;color:var(--muted)}
+.tbl-wrap{background:#fff;border:1px solid var(--line);border-radius:14px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:520px}
+th{text-align:left;font-size:.85rem;font-weight:600;color:var(--muted);padding:12px 16px;border-bottom:2px solid var(--line);white-space:nowrap}
+td{padding:11px 16px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+.tag{display:inline-block;padding:2px 10px;border-radius:99px;background:var(--paper);font-size:.8rem}
+
+/* ---------- misc ---------- */
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);z-index:20;max-width:min(92vw,460px);padding:12px 20px;border-radius:12px;background:var(--ink);color:#fff;opacity:0;visibility:hidden;transition:.2s}
+.toast.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
+.toast.bad{background:var(--bad)}
+.toast.ok{background:var(--ok)}
+dialog{border:0;border-radius:16px;padding:26px;width:calc(100% - 32px);max-width:380px;color:var(--ink)}
+dialog::backdrop{background:rgba(16,22,51,.6)}
+dialog h2{font-size:1.2rem;margin-bottom:4px}
+dialog .field{margin:16px 0 6px}
+.spin{display:inline-block;width:18px;height:18px;border:3px solid var(--line);border-top-color:var(--flag-blue);border-radius:50%;animation:sp 1s linear infinite;vertical-align:-3px;margin-right:8px}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+@media (max-width:900px){
+  .scan,.reg{grid-template-columns:1fr}
+  .clock .time{font-size:2.6rem}
+}
+@media (max-width:640px){
+  .top-in{padding:12px 16px 0}
+  .nav{width:100%}
+  .nav button{flex:1;padding:10px 6px 12px}
+  main{padding:16px 14px 48px}
+  .result{grid-template-columns:auto 1fr;padding:12px}
+  .result .t{grid-column:1/-1;font-size:1.5rem}
+  .result .who{font-size:1.25rem}
+  .count{font-size:5rem}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="flagline" aria-hidden="true"></div>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <div class="mark" id="mark">
+        <svg viewBox="0 0 44 44" width="44" height="44" aria-hidden="true">
+          <rect width="44" height="44" rx="10" fill="#2D2A4A"/>
+          <rect x="12" y="8" width="2.6" height="29" rx="1.3" fill="#fff"/>
+          <g transform="translate(14.6 9)">
+            <rect width="20" height="3" fill="#D6334D"/><rect y="3" width="20" height="3" fill="#fff"/>
+            <rect y="6" width="20" height="6" fill="#4C5FC4"/><rect y="12" width="20" height="3" fill="#fff"/>
+            <rect y="15" width="20" height="3" fill="#D6334D"/>
+          </g>
+        </svg>
+      </div>
+      <div>
+        <h1 class="college" id="brandName">วิทยาลัยชุมชนพิจิตร</h1>
+        <p class="campus" id="brandCampus">หน่วยจัดการศึกษาทับคล้อ (ขุนไผ่ภูมิเขตร)</p>
+      </div>
+    </div>
+    <nav class="nav" aria-label="เมนูหลัก">
+      <button type="button" data-view="scan" aria-current="page">สแกนเช็คชื่อ</button>
+      <button type="button" data-view="register">ลงทะเบียนใบหน้า</button>
+      <button type="button" data-view="admin">รายงาน</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- ================= สแกนเช็คชื่อ ================= -->
+  <section id="view-scan" class="view scan">
+    <div>
+      <div class="stage" id="stageScan">
+        <div class="mirror"><video id="vScan" playsinline muted></video><canvas id="cScan"></canvas></div>
+        <div class="brackets" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <div class="pill" id="pillScan" data-s="busy"><span class="dot"></span><span id="pillScanText">กำลังโหลดโมเดลใบหน้า…</span></div>
+        <div class="stage-tools">
+          <button type="button" class="icon-btn" id="btnSound" aria-pressed="true" aria-label="เสียงแจ้งเตือน" title="เสียงแจ้งเตือน">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+          </button>
+          <button type="button" class="icon-btn" id="btnFlipScan" aria-label="สลับกล้อง" title="สลับกล้อง">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg>
+          </button>
+        </div>
+        <div class="start" id="startScan">
+          <button type="button" class="btn primary big" id="btnStart" disabled>เปิดกล้องเพื่อเริ่มสแกน</button>
+          <p id="startNote">กำลังเตรียมระบบ กรุณารอสักครู่</p>
+        </div>
+        <div class="result" id="result" role="status" aria-live="assertive"></div>
+      </div>
+    </div>
+
+    <aside class="side">
+      <div class="clock">
+        <div class="time num" id="clock">--:--:--</div>
+        <div class="date" id="dateTh"></div>
+      </div>
+      <label class="field">
+        <span>กิจกรรมที่กำลังเช็คชื่อ</span>
+        <select id="selActivity"></select>
+      </label>
+      <div class="counter">
+        <div class="row"><span>เช็คชื่อแล้ว</span><span><b class="num" id="cntDone">0</b> จาก <span class="num" id="cntAll">0</span> คน</span></div>
+        <div class="bar" aria-hidden="true"><i id="cntBar"></i></div>
+      </div>
+      <div>
+        <h2>เช็คชื่อล่าสุด</h2>
+        <ol class="recent" id="recent"></ol>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ================= ลงทะเบียน ================= -->
+  <section id="view-register" class="view reg" hidden>
+    <div>
+      <div class="stage" id="stageReg">
+        <div class="mirror"><video id="vReg" playsinline muted></video><canvas id="cReg"></canvas></div>
+        <div class="brackets" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <div class="pill" id="pillReg" data-s="busy"><span class="dot"></span><span id="pillRegText">กำลังเปิดกล้อง…</span></div>
+        <div class="stage-tools">
+          <button type="button" class="icon-btn" id="btnFlipReg" aria-label="สลับกล้อง" title="สลับกล้อง">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg>
+          </button>
+        </div>
+        <div class="count num" id="regCount" aria-live="polite"></div>
+        <div class="instr" id="regInstr">กรอกข้อมูลด้านขวา แล้วกด “เริ่มบันทึกใบหน้า”</div>
+      </div>
+      <div class="slots" id="slots"></div>
+    </div>
+
+    <form class="panel" id="regForm" autocomplete="off" novalidate>
+      <h2>ข้อมูลผู้ใช้ใหม่</h2>
+      <div class="seg" role="radiogroup" aria-label="ประเภทผู้ใช้" style="align-self:flex-start">
+        <label><input type="radio" name="utype" value="นักศึกษา" checked><span>นักศึกษา</span></label>
+        <label><input type="radio" name="utype" value="บุคลากร"><span>บุคลากร</span></label>
+      </div>
+      <label class="field"><span id="lblId">รหัสนักศึกษา</span><input type="text" id="fId" inputmode="text" maxlength="30"></label>
+      <label class="field"><span>ชื่อ-สกุล</span><input type="text" id="fName" maxlength="80" placeholder="เช่น นายสมชาย ใจดี"></label>
+      <label class="field"><span id="lblGroup">กลุ่มเรียน</span><input type="text" id="fGroup" maxlength="60" placeholder="เช่น ปวส.1 การบัญชี"></label>
+      <label class="check"><input type="checkbox" id="fConsent"><span>เจ้าของใบหน้ายินยอมให้เก็บข้อมูลใบหน้าเพื่อใช้เช็คชื่อเท่านั้น</span></label>
+      <div id="regMsg" class="msg" hidden></div>
+      <div class="actions">
+        <button type="button" class="btn" id="btnCapture">เริ่มบันทึกใบหน้า</button>
+        <button type="submit" class="btn primary" id="btnSave" disabled>บันทึกผู้ใช้</button>
+      </div>
+      <p class="hint">ระบบจะถ่าย 3 มุม (มองตรง หันซ้าย หันขวา) ให้อยู่ในที่สว่าง ไม่สวมหมวกหรือแว่นดำ</p>
+    </form>
+  </section>
+
+  <!-- ================= รายงาน ================= -->
+  <section id="view-admin" class="view admin" hidden>
+    <div class="toolbar">
+      <label class="field"><span>วันที่</span><input type="date" id="repDate"></label>
+      <label class="field"><span>กิจกรรม</span><select id="repAct"></select></label>
+      <label class="field"><span>ค้นหา</span><input type="text" id="qAdmin" placeholder="ชื่อหรือรหัส"></label>
+      <div class="actions">
+        <button type="button" class="btn" id="btnRefresh">โหลดใหม่</button>
+        <a class="btn" id="lnkSheet" href="#" target="_blank" rel="noopener" style="text-decoration:none">เปิด Google Sheet</a>
+      </div>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="seg" id="segAdmin" style="margin-bottom:14px">
+      <button type="button" data-tab="report" aria-pressed="true">เช็คชื่อแล้ว</button>
+      <button type="button" data-tab="absent" aria-pressed="false">ยังไม่เช็คชื่อ</button>
+      <button type="button" data-tab="users" aria-pressed="false">ผู้ใช้ทั้งหมด</button>
+    </div>
+    <div class="tbl-wrap" id="adminBody"></div>
+  </section>
+</main>
+
+<dialog id="pinDlg" aria-labelledby="pinTitle">
+  <form id="pinForm">
+    <h2 id="pinTitle">เข้าส่วนผู้ดูแล</h2>
+    <p class="hint">กรอกรหัสผู้ดูแลเพื่อลงทะเบียนผู้ใช้และดูรายงาน</p>
+    <label class="field"><span>รหัสผู้ดูแล</span><input type="password" id="pinInput" inputmode="numeric" autocomplete="off"></label>
+    <p id="pinErr" class="msg bad" role="alert" hidden></p>
+    <div class="actions" style="justify-content:flex-end;margin-top:14px">
+      <button type="button" class="btn" id="pinCancel">ยกเลิก</button>
+      <button type="submit" class="btn primary" id="pinOk">เข้าสู่ระบบ</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/dist/face-api.js"></script>
+<script>
+'use strict';
+
+/* =====================  ค่าคงที่  ===================== */
+const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/model/';
+const CONFIRM_FRAMES = 2;     // ต้องเจอคนเดิมติดกันกี่เฟรมก่อนบันทึก
+const MIN_FACE = 0.14;        // ใบหน้าต้องกว้างอย่างน้อย 14% ของภาพ จึงจะนำมาเทียบ
+const UNKNOWN_FACE = 0.20;    // ใบหน้าที่ใหญ่พอจะแจ้งว่า "ไม่พบข้อมูล"
+const SCAN_INTERVAL = 200;    // ms
+const STEPS = [
+  { hint: 'มองตรงที่กล้อง', label: 'มองตรง' },
+  { hint: 'หันหน้าไปทางซ้ายเล็กน้อย', label: 'หันซ้าย' },
+  { hint: 'หันหน้าไปทางขวาเล็กน้อย', label: 'หันขวา' }
+];
+const MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const DAYS = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+
+/* =====================  ตัวช่วย  ===================== */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pad = n => String(n).padStart(2, '0');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const cleanErr = e => String((e && e.message) || e || 'เกิดข้อผิดพลาด').replace(/^(Error|Exception):\s*/i, '');
+
+/* =====================  เชื่อมต่อ Google Apps Script (API)  =====================
+ * หน้านี้โฮสต์บน GitHub Pages จึงใช้ google.script.run ไม่ได้ ต้องเรียก Apps Script ผ่าน fetch แทน
+ * ทุกที่ในโค้ดเรียก gs('ชื่อฟังก์ชัน', อาร์กิวเมนต์...) เหมือนเดิม จึงแก้แค่ฟังก์ชันนี้จุดเดียว
+ *
+ * วิธีทำงาน: ส่ง POST ไปที่ลิงก์ /exec ด้วยข้อความ JSON {fn, args} แล้วรอรับ {ok, data | error}
+ * ใช้ Content-Type แบบ text/plain เพื่อเลี่ยง CORS preflight (Apps Script ตอบ preflight ไม่ได้)
+ */
+const API_URL = 'https://script.google.com/macros/s/AKfycbzIGHc_6DbrAL5VFfVBiRPGpE6DHxfTjoNPwKQEuFeFi6rEBWLW1LpRNGyPg4vDhEMf/exec';   // <<< ต้องแก้ก่อนใช้งาน
+const API_TIMEOUT = 45000;                                      // รอเซิร์ฟเวอร์สูงสุด 45 วินาที
+
+async function gs(fn, ...args) {
+  if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(API_URL)) {
+    throw new Error('ยังไม่ได้ตั้งค่า API_URL ในไฟล์ index.html (วางลิงก์ /exec จากการ Deploy)');
+  }
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), API_TIMEOUT);
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ fn, args }),
+      redirect: 'follow',          // Apps Script ตอบด้วยการเปลี่ยนเส้นทาง (302) ต้องตามไป
+      signal: ctl.signal
+    });
+    let json;
+    try { json = await res.json(); }
+    catch (e) { throw new Error('เซิร์ฟเวอร์ตอบกลับผิดรูปแบบ ตรวจว่า Deploy เป็น "Anyone" และใช้ลิงก์ /exec'); }
+    if (!json.ok) throw new Error(json.error || 'เกิดข้อผิดพลาดที่เซิร์ฟเวอร์');
+    return json.data;
+  } catch (e) {
+    if (e.name === 'AbortError') throw new Error('เซิร์ฟเวอร์ตอบช้าเกินไป ลองใหม่อีกครั้ง');
+    if (e instanceof TypeError) throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ตรวจอินเทอร์เน็ต และตรวจว่า Deploy เป็น "Anyone"');
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function thaiDate(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return d + ' ' + MONTHS[m - 1] + ' ' + (y + 543);
+}
+
+let toastTimer;
+function toast(text, kind) {
+  const t = $('#toast');
+  t.textContent = text;
+  t.className = 'toast show ' + (kind || '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+/* =====================  สถานะรวม  ===================== */
+const S = {
+  view: 'scan', pin: '', pendingView: '',
+  users: [], adminUsers: [], threshold: 0.5, today: '',
+  activity: '', activities: [],
+  checked: new Set(), recent: [],
+  streak: {}, cool: {}, unkFrames: 0, unkCool: 0,
+  modelsReady: false, dataReady: false, scanStarted: false, loopOn: false, sound: true,
+  regFaces: [], capturing: false, dupAck: false, lastGrabMsg: '',
+  tab: 'report', report: []
+};
+
+/* =====================  กล้อง  ===================== */
+class Cam {
+  constructor(stage, video, canvas, pill, pillText) {
+    this.stage = stage; this.video = video; this.canvas = canvas;
+    this.pill = pill; this.pillText = pillText;
+    this.stream = null; this.deviceId = null; this.facing = 'user'; this.mirror = true; this.on = false;
+  }
+  async start() {
+    this.stop();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw Object.assign(new Error('เบราว์เซอร์นี้ไม่รองรับกล้อง ลองเปิดด้วย Chrome หรือ Safari'), { name: 'Unsupported' });
+    }
+    const base = { width: { ideal: 960 }, height: { ideal: 720 } };
+    const video = this.deviceId ? Object.assign({}, base, { deviceId: { exact: this.deviceId } }) : Object.assign({}, base, { facingMode: this.facing });
+    this.stream = await navigator.mediaDevices.getUserMedia({ audio: false, video });
+    this.video.srcObject = this.stream;
+    await this.video.play();
+    if (!this.video.videoWidth) await new Promise(r => this.video.addEventListener('loadedmetadata', r, { once: true }));
+    const st = this.stream.getVideoTracks()[0].getSettings();
+    this.mirror = st.facingMode ? st.facingMode !== 'environment' : this.facing !== 'environment';
+    this.stage.classList.toggle('unmirror', !this.mirror);
+    this.stage.style.aspectRatio = this.video.videoWidth + '/' + this.video.videoHeight;
+    this.canvas.width = this.video.videoWidth;
+    this.canvas.height = this.video.videoHeight;
+    this.on = true;
+  }
+  stop() {
+    if (this.stream) this.stream.getTracks().forEach(t => t.stop());
+    this.stream = null; this.video.srcObject = null; this.on = false;
+    const c = this.canvas.getContext('2d'); c.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  }
+  async flip() {
+    const devs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'videoinput');
+    if (devs.length > 1) {
+      const cur = this.stream ? this.stream.getVideoTracks()[0].getSettings().deviceId : null;
+      let i = devs.findIndex(d => d.deviceId === cur);
+      this.deviceId = devs[(i + 1) % devs.length].deviceId;
+    } else {
+      this.facing = this.facing === 'user' ? 'environment' : 'user';
+      this.deviceId = null;
+    }
+    await this.start();
+  }
+  setPill(state, text) {
+    this.pill.dataset.s = state;
+    if (this.pillText.textContent !== text) this.pillText.textContent = text;
+  }
+  draw(items) {
+    const c = this.canvas, ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, c.width, c.height);
+    const lw = Math.max(3, c.width / 200), L = 0.22;
+    items.forEach(({ box, color }) => {
+      ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineCap = 'round';
+      const { x, y, width: w, height: h } = box, lx = w * L, ly = h * L;
+      ctx.beginPath();
+      ctx.moveTo(x, y + ly); ctx.lineTo(x, y); ctx.lineTo(x + lx, y);
+      ctx.moveTo(x + w - lx, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + ly);
+      ctx.moveTo(x + w, y + h - ly); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w - lx, y + h);
+      ctx.moveTo(x + lx, y + h); ctx.lineTo(x, y + h); ctx.lineTo(x, y + h - ly);
+      ctx.stroke();
+    });
+  }
+}
+const camScan = new Cam($('#stageScan'), $('#vScan'), $('#cScan'), $('#pillScan'), $('#pillScanText'));
+const camReg = new Cam($('#stageReg'), $('#vReg'), $('#cReg'), $('#pillReg'), $('#pillRegText'));
+
+function camErrorText(e) {
+  if (e && e.name === 'NotAllowedError') return 'ไม่ได้รับอนุญาตให้ใช้กล้อง กดไอคอนกล้องข้างช่องที่อยู่เว็บแล้วเลือก “อนุญาต”';
+  if (e && e.name === 'NotFoundError') return 'ไม่พบกล้องในอุปกรณ์นี้';
+  if (e && e.name === 'NotReadableError') return 'กล้องถูกใช้งานโดยแอปอื่นอยู่ ปิดแอปนั้นแล้วลองใหม่';
+  return cleanErr(e) + ' (ถ้าเปิดจากแอป LINE หรือ Facebook ให้เปิดลิงก์ด้วย Chrome/Safari)';
+}
+
+/* =====================  โมเดลใบหน้า  ===================== */
+async function loadModels() {
+  try { await faceapi.tf.setBackend('webgl'); } catch (e) { /* ใช้ค่าเริ่มต้น */ }
+  await faceapi.tf.ready();
+  await Promise.all([
+    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+  ]);
+  S.modelsReady = true;
+}
+const detOpts = (size) => new faceapi.TinyFaceDetectorOptions({ inputSize: size || 320, scoreThreshold: 0.5 });
+
+function euclid(a, b) {
+  let s = 0;
+  for (let i = 0; i < 128; i++) { const d = a[i] - b[i]; s += d * d; }
+  return Math.sqrt(s);
+}
+function setUsers(list) {
+  S.users = list.map(u => Object.assign({}, u, { f32: (u.faces || []).map(f => new Float32Array(f)) }));
+}
+// คืนผู้ใช้ที่ใกล้ที่สุด ถ้าผ่านเกณฑ์และห่างจากอันดับ 2 พอสมควร
+function matchFace(desc, excludeId, thr) {
+  const TH = thr || S.threshold;
+  let best = null, bestD = 9, second = 9;
+  for (const u of S.users) {
+    if (excludeId && u.id === excludeId) continue;
+    let m = 9;
+    for (const f of u.f32) { const d = euclid(desc, f); if (d < m) m = d; }
+    if (m < bestD) { second = bestD; bestD = m; best = u; } else if (m < second) { second = m; }
+  }
+  if (best && bestD <= TH && (second - bestD) >= 0.03) return { user: best, dist: bestD };
+  return null;
+}
+function nearestUser(desc, excludeId) {
+  let best = null, bestD = 9;
+  for (const u of S.users) {
+    if (u.id === excludeId) continue;
+    for (const f of u.f32) { const d = euclid(desc, f); if (d < bestD) { bestD = d; best = u; } }
+  }
+  return best && bestD <= S.threshold - 0.05 ? best : null;
+}
+
+/* =====================  เสียง  ===================== */
+let actx;
+function beep(kind) {
+  if (!S.sound) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    const seq = kind === 'ok' ? [[880, 0], [1175, .13]] : kind === 'dup' ? [[560, 0]] : [[240, 0], [190, .15]];
+    const now = actx.currentTime;
+    seq.forEach(([f, t]) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, now + t);
+      g.gain.exponentialRampToValueAtTime(0.25, now + t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + t + 0.15);
+      o.connect(g); g.connect(actx.destination);
+      o.start(now + t); o.stop(now + t + 0.16);
+    });
+  } catch (e) { /* เงียบไว้ */ }
+}
+
+/* =====================  หน้าสแกน  ===================== */
+const ICON_OK = '<svg class="ico" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="22" cy="22" r="19"/><path d="m13 23 6.5 6.5L31 16"/></svg>';
+const ICON_DUP = '<svg class="ico" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="22" cy="22" r="19"/><path d="M22 12v11l7 4"/></svg>';
+const ICON_BAD = '<svg class="ico" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="22" cy="22" r="19"/><path d="M22 12v13M22 31v.5"/></svg>';
+
+const RQ = []; let rShowing = false, rTimer;
+function pushResult(r) { if (RQ.length < 6) RQ.push(r); if (!rShowing) nextResult(); }
+function nextResult() {
+  const el = $('#result'), r = RQ.shift();
+  if (!r) { rShowing = false; el.classList.remove('show'); return; }
+  rShowing = true;
+  el.className = 'result show ' + r.kind;
+  el.innerHTML = (r.kind === 'ok' ? ICON_OK : r.kind === 'dup' ? ICON_DUP : ICON_BAD) +
+    '<div><div class="lbl">' + esc(r.label || '') + '</div><div class="who">' + esc(r.title) + '</div><div class="sub">' + esc(r.sub || '') + '</div></div>' +
+    '<div class="t num">' + esc(r.time || '') + '</div>';
+  beep(r.kind);
+  clearTimeout(rTimer);
+  rTimer = setTimeout(nextResult, RQ.length ? 1500 : 2800);
+}
+
+async function startScan() {
+  const note = $('#startNote');
+  try {
+    camScan.setPill('busy', 'กำลังเปิดกล้อง…');
+    await camScan.start();
+    $('#startScan').hidden = true;
+    S.scanStarted = true;
+    camScan.setPill('ready', 'พร้อมสแกน มองตรงที่กล้อง');
+    if (!S.loopOn) { S.loopOn = true; scanLoop(); }
+  } catch (e) {
+    $('#startScan').hidden = false;
+    note.className = 'err';
+    note.textContent = camErrorText(e);
+    camScan.setPill('warn', 'เปิดกล้องไม่สำเร็จ');
+    $('#btnStart').textContent = 'ลองเปิดกล้องอีกครั้ง';
+  }
+}
+
+async function scanLoop() {
+  if (S.view !== 'scan' || !camScan.on) { S.loopOn = false; return; }
+  const t0 = performance.now();
+  try { if (camScan.video.readyState >= 2) await scanFrame(); } catch (e) { console.error(e); }
+  setTimeout(scanLoop, Math.max(0, SCAN_INTERVAL - (performance.now() - t0)));
+}
+
+async function scanFrame() {
+  const v = camScan.video, vw = v.videoWidth;
+  const dets = await faceapi.detectAllFaces(v, detOpts(320)).withFaceLandmarks().withFaceDescriptors();
+  const faces = dets.filter(d => d.detection.box.width >= vw * MIN_FACE)
+    .sort((a, b) => b.detection.box.width - a.detection.box.width).slice(0, 6);
+  const boxes = [], seen = new Set();
+  let state = ['ready', 'พร้อมสแกน มองตรงที่กล้อง'], unknownBig = false;
+
+  if (dets.length && !faces.length) state = ['warn', 'เข้าใกล้กล้องอีกนิด'];
+  for (const d of faces) {
+    const box = d.detection.box, m = matchFace(d.descriptor);
+    if (m) {
+      const id = m.user.id;
+      boxes.push({ box, color: '#38d39f' });
+      seen.add(id);
+      S.streak[id] = (S.streak[id] || 0) + 1;
+      state = ['ok', 'กำลังตรวจสอบ…'];
+      if (S.streak[id] >= CONFIRM_FRAMES && !((S.cool[id] || 0) > Date.now())) confirmMatch(m);
+    } else {
+      boxes.push({ box, color: '#ff7b72' });
+      if (box.width >= vw * UNKNOWN_FACE) unknownBig = true;
+    }
+  }
+  Object.keys(S.streak).forEach(id => { if (!seen.has(id)) delete S.streak[id]; });
+
+  S.unkFrames = (unknownBig && !seen.size) ? S.unkFrames + 1 : 0;
+  if (S.unkFrames >= 4) {
+    state = ['warn', 'ไม่พบข้อมูลใบหน้านี้'];
+    if (Date.now() > S.unkCool) {
+      S.unkCool = Date.now() + 6000;
+      pushResult({ kind: 'bad', title: 'ไม่พบข้อมูลใบหน้านี้', sub: 'ลองมองตรงที่กล้องอีกครั้ง หรือแจ้งผู้ดูแลเพื่อลงทะเบียน' });
+    }
+  }
+  camScan.draw(boxes);
+  camScan.setPill(state[0], state[1]);
+}
+
+async function confirmMatch(m) {
+  const u = m.user;
+  S.cool[u.id] = Date.now() + 15000;
+  try {
+    const r = await gs('checkIn', { id: u.id, activity: S.activity, distance: m.dist });
+    if (r.status === 'ok') {
+      S.cool[u.id] = Date.now() + 30000;
+      addChecked(r);
+      pushResult({ kind: 'ok', label: 'เช็คชื่อแล้ว', title: r.name, sub: r.group + (r.group ? ' • ' : '') + r.activity, time: r.time.slice(0, 5) + ' น.' });
+    } else if (r.status === 'duplicate') {
+      S.cool[u.id] = Date.now() + 30000;
+      addChecked(r);
+      pushResult({ kind: 'dup', label: 'เช็คชื่อไปแล้วก่อนหน้านี้', title: r.name, sub: r.activity, time: r.time.slice(0, 5) + ' น.' });
+    } else {
+      pushResult({ kind: 'bad', title: 'ไม่พบผู้ใช้ในระบบ', sub: 'ข้อมูลอาจถูกลบแล้ว ลองโหลดหน้านี้ใหม่' });
+    }
+  } catch (e) {
+    S.cool[u.id] = Date.now() + 3000;
+    pushResult({ kind: 'bad', title: 'บันทึกไม่สำเร็จ', sub: e.message });
+  }
+}
+
+function addChecked(r) {
+  if (!S.checked.has(r.id)) {
+    S.checked.add(r.id);
+    S.recent.unshift({ id: r.id, name: r.name, group: r.group, time: r.time });
+  }
+  renderSide();
+}
+
+function renderSide() {
+  const total = S.users.length, done = S.checked.size;
+  $('#cntDone').textContent = done;
+  $('#cntAll').textContent = total;
+  $('#cntBar').style.width = (total ? Math.min(100, done / total * 100) : 0) + '%';
+  const ol = $('#recent');
+  if (!S.recent.length) { ol.innerHTML = '<li class="empty">ยังไม่มีใครเช็คชื่อในกิจกรรมนี้</li>'; return; }
+  ol.innerHTML = S.recent.slice(0, 8).map(r =>
+    '<li><span class="n">' + esc(r.name) + (r.group ? '<span class="g">' + esc(r.group) + '</span>' : '') + '</span><span class="tm num">' + esc(r.time.slice(0, 5)) + '</span></li>'
+  ).join('');
+}
+
+async function refreshToday() {
+  if (!S.activity) return;
+  try {
+    const r = await gs('getTodayAttendance', S.activity);
+    S.checked = new Set(r.rows.map(x => x.id));
+    S.recent = r.rows.slice().reverse().map(x => ({ id: x.id, name: x.name, group: x.group, time: x.time }));
+    renderSide();
+  } catch (e) { /* ข้ามรอบนี้ */ }
+}
+
+/* =====================  หน้าลงทะเบียน  ===================== */
+function renderSlots() {
+  $('#slots').innerHTML = STEPS.map((s, i) => {
+    const f = S.regFaces[i];
+    return '<div class="slot' + (f ? ' done' : '') + '"><div class="im">' + (f ? '<img alt="ภาพใบหน้า ' + esc(s.label) + '" src="' + f.thumb + '">' : '') + '</div>' + esc(s.label) + '</div>';
+  }).join('');
+}
+
+function readForm() {
+  return {
+    type: $('input[name=utype]:checked').value,
+    id: $('#fId').value.trim(),
+    name: $('#fName').value.trim(),
+    group: $('#fGroup').value.trim()
+  };
+}
+function updateSave() {
+  const f = readForm();
+  $('#btnSave').disabled = !(f.id && f.name && $('#fConsent').checked && S.regFaces.length === STEPS.length && !S.capturing);
+  $('#btnCapture').disabled = S.capturing;
+  $('#btnCapture').textContent = S.regFaces.length ? 'ถ่ายใหม่' : 'เริ่มบันทึกใบหน้า';
+}
+function regMsg(text, kind) {
+  const el = $('#regMsg');
+  el.hidden = !text; el.textContent = text || ''; el.className = 'msg ' + (kind || '');
+}
+
+async function startReg() {
+  regMsg('');
+  try {
+    camReg.setPill('busy', 'กำลังเปิดกล้อง…');
+    await camReg.start();
+    camReg.setPill('ready', 'กล้องพร้อมใช้งาน');
+  } catch (e) {
+    camReg.setPill('warn', 'เปิดกล้องไม่สำเร็จ');
+    regMsg(camErrorText(e), 'bad');
+  }
+}
+
+async function grabOne() {
+  const v = camReg.video;
+  const dets = await faceapi.detectAllFaces(v, detOpts(416)).withFaceLandmarks().withFaceDescriptors();
+  if (dets.length === 0) { S.lastGrabMsg = 'ไม่พบใบหน้า ให้หน้าอยู่กลางภาพและอยู่ในที่สว่าง'; return null; }
+  if (dets.length > 1) { S.lastGrabMsg = 'พบหลายใบหน้าในภาพ ให้เหลือเพียงคนเดียว'; return null; }
+  const d = dets[0], b = d.detection.box;
+  if (b.width < v.videoWidth * 0.2) { S.lastGrabMsg = 'ใบหน้าเล็กเกินไป เข้าใกล้กล้องอีกนิด'; return null; }
+  const c = document.createElement('canvas'); c.width = c.height = 120;
+  const ctx = c.getContext('2d');
+  const side = Math.max(b.width, b.height) * 1.5, cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+  if (camReg.mirror) { ctx.translate(120, 0); ctx.scale(-1, 1); }
+  ctx.drawImage(v, cx - side / 2, cy - side / 2, side, side, 0, 0, 120, 120);
+  return { desc: Array.from(d.descriptor, x => Math.round(x * 10000) / 10000), thumb: c.toDataURL('image/jpeg', 0.7) };
+}
+
+async function captureSequence() {
+  if (S.capturing) return;
+  if (!camReg.on) { await startReg(); if (!camReg.on) return; }
+  S.capturing = true; S.regFaces = []; S.dupAck = false;
+  regMsg(''); renderSlots(); updateSave();
+  try {
+    for (let i = 0; i < STEPS.length; i++) {
+      $('#regInstr').textContent = STEPS[i].hint;
+      for (let c = 3; c >= 1; c--) { $('#regCount').textContent = c; await sleep(900); }
+      $('#regCount').textContent = '';
+      let shot = null;
+      for (let t = 0; t < 12 && !shot; t++) { shot = await grabOne(); if (!shot) await sleep(250); }
+      if (!shot) throw new Error(S.lastGrabMsg || 'ไม่พบใบหน้า');
+      S.regFaces.push(shot); renderSlots();
+    }
+    $('#regInstr').textContent = 'บันทึกใบหน้าครบแล้ว ตรวจสอบภาพด้านล่างแล้วกด “บันทึกผู้ใช้”';
+  } catch (e) {
+    S.regFaces = []; renderSlots();
+    $('#regInstr').textContent = 'บันทึกไม่สำเร็จ กด “เริ่มบันทึกใบหน้า” เพื่อลองใหม่';
+    regMsg(cleanErr(e), 'bad');
+  } finally {
+    S.capturing = false; $('#regCount').textContent = ''; updateSave();
+  }
+}
+
+async function saveUser(ev) {
+  ev.preventDefault();
+  const f = readForm();
+  if (!f.id || !f.name) { regMsg('กรอกรหัสและชื่อ-สกุลให้ครบ', 'bad'); return; }
+  if (S.users.some(u => u.id === f.id)) { regMsg('รหัส ' + f.id + ' ลงทะเบียนไว้แล้ว', 'bad'); return; }
+
+  const dup = nearestUser(Float32Array.from(S.regFaces[0].desc), f.id);
+  if (dup && !S.dupAck) {
+    S.dupAck = true;
+    regMsg('ใบหน้านี้คล้ายกับ ' + dup.name + ' (รหัส ' + dup.id + ') ที่ลงทะเบียนไว้แล้ว ถ้าแน่ใจว่าเป็นคนละคน กด “บันทึกผู้ใช้” อีกครั้งเพื่อยืนยัน', 'warn');
+    return;
+  }
+  const btn = $('#btnSave'); btn.disabled = true; btn.textContent = 'กำลังบันทึก…';
+  try {
+    const faces = S.regFaces.map(x => x.desc);
+    await gs('registerUser', S.pin, { id: f.id, name: f.name, type: f.type, group: f.group, faces });
+    S.users.push(Object.assign({ id: f.id, name: f.name, type: f.type, group: f.group, faces }, { f32: faces.map(a => new Float32Array(a)) }));
+    toast('ลงทะเบียน ' + f.name + ' เรียบร้อย', 'ok');
+    $('#fId').value = ''; $('#fName').value = ''; $('#fGroup').value = ''; $('#fConsent').checked = false;
+    S.regFaces = []; S.dupAck = false; renderSlots();
+    $('#regInstr').textContent = 'พร้อมลงทะเบียนคนถัดไป';
+    regMsg('');
+  } catch (e) {
+    regMsg(cleanErr(e), 'bad');
+  } finally {
+    btn.textContent = 'บันทึกผู้ใช้'; updateSave();
+  }
+}
+
+/* =====================  หน้ารายงาน  ===================== */
+async function loadAdmin() {
+  if (!$('#repDate').value) $('#repDate').value = S.today;
+  $('#adminBody').innerHTML = '<p class="empty" style="padding:20px"><span class="spin"></span>กำลังโหลดข้อมูล…</p>';
+  try {
+    const date = $('#repDate').value, act = $('#repAct').value;
+    const [users, rep] = await Promise.all([gs('adminListUsers', S.pin), gs('getReport', S.pin, date, act)]);
+    S.adminUsers = users; S.report = rep.rows;
+    renderAdmin();
+  } catch (e) {
+    $('#adminBody').innerHTML = '<p class="msg bad" style="margin:16px">' + esc(cleanErr(e)) + '</p>';
+  }
+}
+
+function renderAdmin() {
+  const q = $('#qAdmin').value.trim().toLowerCase();
+  const match = (o) => !q || (o.id + ' ' + o.name + ' ' + (o.group || '')).toLowerCase().includes(q);
+  const doneIds = new Set(S.report.map(r => r.id));
+  const absent = S.adminUsers.filter(u => !doneIds.has(u.id));
+
+  $('#stats').innerHTML =
+    '<div><b class="num">' + S.adminUsers.length + '</b><span>ผู้ใช้ทั้งหมด</span></div>' +
+    '<div><b class="num" style="color:var(--ok)">' + doneIds.size + '</b><span>เช็คชื่อแล้ว</span></div>' +
+    '<div><b class="num" style="color:var(--flag-red)">' + absent.length + '</b><span>ยังไม่เช็คชื่อ</span></div>' +
+    '<div style="justify-content:flex-end"><span>' + esc(thaiDate($('#repDate').value || S.today)) + '</span></div>';
+
+  $$('#segAdmin button').forEach(b => b.setAttribute('aria-pressed', b.dataset.tab === S.tab));
+  let head, rows;
+  if (S.tab === 'report') {
+    head = ['เวลา', 'รหัส', 'ชื่อ-สกุล', 'กลุ่ม/สังกัด'];
+    rows = S.report.filter(match).map(r => [r.time.slice(0, 5) + ' น.', r.id, r.name, r.group || '-']);
+  } else if (S.tab === 'absent') {
+    head = ['รหัส', 'ชื่อ-สกุล', 'ประเภท', 'กลุ่ม/สังกัด'];
+    rows = absent.filter(match).map(u => [u.id, u.name, u.type, u.group || '-']);
+  } else {
+    head = ['รหัส', 'ชื่อ-สกุล', 'ประเภท', 'กลุ่ม/สังกัด', 'ภาพใบหน้า', ''];
+    rows = S.adminUsers.filter(match).map(u => [u.id, u.name, u.type, u.group || '-', u.faceCount + ' ภาพ',
+      { html: '<button type="button" class="btn danger sm" data-del="' + esc(u.id) + '">ลบ</button>' }]);
+  }
+  if (!rows.length) {
+    $('#adminBody').innerHTML = '<p class="empty" style="padding:20px">' + (S.tab === 'absent' && S.adminUsers.length ? 'ทุกคนเช็คชื่อครบแล้ว' : 'ไม่พบข้อมูล') + '</p>';
+    return;
+  }
+  $('#adminBody').innerHTML = '<table><thead><tr>' + head.map(h => '<th scope="col">' + esc(h) + '</th>').join('') + '</tr></thead><tbody>' +
+    rows.map(r => '<tr>' + r.map(c => '<td class="num">' + (c && c.html ? c.html : esc(c)) + '</td>').join('') + '</tr>').join('') + '</tbody></table>';
+}
+
+async function onDelete(btn) {
+  if (!btn.classList.contains('armed')) {
+    btn.classList.add('armed'); btn.textContent = 'ยืนยันลบ';
+    setTimeout(() => { if (btn.isConnected) { btn.classList.remove('armed'); btn.textContent = 'ลบ'; } }, 3000);
+    return;
+  }
+  const id = btn.dataset.del; btn.disabled = true;
+  try {
+    await gs('deleteUser', S.pin, id);
+    S.adminUsers = S.adminUsers.filter(u => u.id !== id);
+    S.users = S.users.filter(u => u.id !== id);
+    toast('ลบผู้ใช้รหัส ' + id + ' แล้ว', 'ok');
+    renderAdmin();
+  } catch (e) { toast(cleanErr(e), 'bad'); btn.disabled = false; }
+}
+
+/* =====================  สลับหน้า / PIN  ===================== */
+async function go(view) {
+  if ((view === 'register' || view === 'admin') && !S.pin) { S.pendingView = view; openPin(); return; }
+  S.view = view;
+  $$('.view').forEach(v => v.hidden = v.id !== 'view-' + view);
+  $$('.nav button').forEach(b => { if (b.dataset.view === view) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+  if (view === 'scan') {
+    camReg.stop();
+    if (S.scanStarted) { await startScan(); }
+  } else if (view === 'register') {
+    camScan.stop(); renderSlots(); updateSave(); await startReg();
+  } else {
+    camScan.stop(); camReg.stop(); loadAdmin();
+  }
+}
+
+function openPin() {
+  $('#pinErr').hidden = true; $('#pinInput').value = '';
+  $('#pinDlg').showModal();
+  setTimeout(() => $('#pinInput').focus(), 50);
+}
+
+/* =====================  นาฬิกา  ===================== */
+function tickClock() {
+  const d = new Date();
+  $('#clock').textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+  $('#dateTh').textContent = 'วัน' + DAYS[d.getDay()] + 'ที่ ' + d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + (d.getFullYear() + 543);
+}
+
+/* =====================  เริ่มต้นระบบ  ===================== */
+function bind() {
+  $$('.nav button').forEach(b => b.addEventListener('click', () => go(b.dataset.view)));
+
+  $('#btnStart').addEventListener('click', async () => {
+    try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); actx.resume(); } catch (e) {}
+    $('#startNote').className = ''; $('#startNote').textContent = 'กำลังเปิดกล้อง…';
+    await startScan();
+  });
+  $('#btnFlipScan').addEventListener('click', async () => { try { await camScan.flip(); } catch (e) { toast(camErrorText(e), 'bad'); } });
+  $('#btnFlipReg').addEventListener('click', async () => { try { await camReg.flip(); } catch (e) { toast(camErrorText(e), 'bad'); } });
+  $('#btnSound').addEventListener('click', e => {
+    S.sound = !S.sound; e.currentTarget.setAttribute('aria-pressed', S.sound);
+    if (S.sound) beep('dup');
+  });
+  $('#selActivity').addEventListener('change', e => { S.activity = e.target.value; S.streak = {}; S.cool = {}; refreshToday(); });
+
+  // ลงทะเบียน
+  $$('input[name=utype]').forEach(r => r.addEventListener('change', () => {
+    const staff = $('input[name=utype]:checked').value === 'บุคลากร';
+    $('#lblId').textContent = staff ? 'รหัสบุคลากร' : 'รหัสนักศึกษา';
+    $('#lblGroup').textContent = staff ? 'สังกัด / ตำแหน่ง' : 'กลุ่มเรียน';
+    $('#fGroup').placeholder = staff ? 'เช่น ฝ่ายวิชาการ' : 'เช่น ปวส.1 การบัญชี';
+    S.dupAck = false; updateSave();
+  }));
+  ['#fId', '#fName', '#fGroup', '#fConsent'].forEach(s => $(s).addEventListener('input', () => { S.dupAck = false; updateSave(); }));
+  $('#btnCapture').addEventListener('click', captureSequence);
+  $('#regForm').addEventListener('submit', saveUser);
+
+  // รายงาน
+  $('#repDate').addEventListener('change', loadAdmin);
+  $('#repAct').addEventListener('change', loadAdmin);
+  $('#btnRefresh').addEventListener('click', loadAdmin);
+  $('#qAdmin').addEventListener('input', renderAdmin);
+  $('#segAdmin').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { S.tab = b.dataset.tab; renderAdmin(); } });
+  $('#adminBody').addEventListener('click', e => { const b = e.target.closest('[data-del]'); if (b) onDelete(b); });
+
+  // PIN
+  $('#pinCancel').addEventListener('click', () => $('#pinDlg').close());
+  $('#pinForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const pin = $('#pinInput').value, ok = $('#pinOk');
+    if (!pin) return;
+    ok.disabled = true; ok.textContent = 'กำลังตรวจสอบ…';
+    try {
+      const r = await gs('verifyPin', pin);
+      if (r.ok) {
+        S.pin = pin; $('#lnkSheet').href = r.sheetUrl;
+        $('#pinDlg').close();
+        const v = S.pendingView || 'register'; S.pendingView = '';
+        go(v);
+      } else {
+        $('#pinErr').textContent = 'รหัสไม่ถูกต้อง ลองอีกครั้ง'; $('#pinErr').hidden = false;
+        $('#pinInput').select();
+      }
+    } catch (err) {
+      $('#pinErr').textContent = cleanErr(err); $('#pinErr').hidden = false;
+    } finally { ok.disabled = false; ok.textContent = 'เข้าสู่ระบบ'; }
+  });
+}
+
+function checkReady() {
+  if (S.modelsReady && S.dataReady) {
+    $('#btnStart').disabled = false;
+    $('#startNote').textContent = 'กดปุ่มเพื่อเปิดกล้อง แล้วให้ทุกคนมองตรงที่กล้องทีละคน หรือหลายคนพร้อมกันก็ได้';
+    camScan.setPill('ready', 'พร้อมเริ่มสแกน');
+  }
+}
+
+(async function init() {
+  bind(); tickClock(); setInterval(tickClock, 1000);
+  renderSlots(); renderSide();
+  loadModels().then(checkReady).catch(e => {
+    $('#startNote').className = 'err';
+    $('#startNote').textContent = 'โหลดโมเดลใบหน้าไม่สำเร็จ: ตรวจสอบอินเทอร์เน็ตแล้วรีเฟรชหน้านี้';
+    camScan.setPill('warn', 'โหลดโมเดลไม่สำเร็จ');
+    console.error(e);
+  });
+  try {
+    const b = await gs('getBootstrap');
+    $('#brandName').textContent = b.college || $('#brandName').textContent;
+    $('#brandCampus').textContent = b.campus || $('#brandCampus').textContent;
+    if (b.logo) $('#mark').innerHTML = '<img alt="โลโก้" src="' + esc(b.logo) + '">';
+    S.threshold = b.threshold; S.today = b.today; S.activities = b.activities;
+    S.activity = b.activities[0] || 'เช็คชื่อ';
+    const opts = b.activities.map(a => '<option>' + esc(a) + '</option>').join('');
+    $('#selActivity').innerHTML = opts; $('#repAct').innerHTML = opts;
+    setUsers(b.users);
+    S.dataReady = true;
+    renderSide(); refreshToday(); checkReady();
+    setInterval(() => { if (S.view === 'scan') refreshToday(); }, 45000);
+  } catch (e) {
+    $('#startNote').className = 'err';
+    $('#startNote').textContent = 'โหลดข้อมูลไม่สำเร็จ: ' + cleanErr(e);
+    camScan.setPill('warn', 'โหลดข้อมูลไม่สำเร็จ');
+  }
+})();
+</script>
+</body>
+</html>
