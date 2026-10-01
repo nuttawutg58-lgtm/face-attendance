@@ -193,7 +193,10 @@ dialog .field{margin:16px 0 6px}
 @media (max-width:640px){.slots{grid-template-columns:repeat(3,1fr)}}
 .oval{position:absolute;z-index:1;left:50%;top:50%;width:42%;height:72%;transform:translate(-50%,-50%);border:3px dashed rgba(255,255,255,.85);border-radius:50%;pointer-events:none;transition:border-color .2s}
 .oval.ok{border-style:solid;border-color:#38d39f}
-.rowact{display:flex;gap:8px}
+.rowact{display:flex;gap:8px;align-items:center}
+.selbox{display:inline-flex;align-items:center;padding:0 6px}
+.selbox input{width:22px;height:22px}
+.cfbody p{margin:8px 0}
 .nav{overflow-x:auto}
 .nav button{white-space:nowrap}
 .nav button.out{color:var(--bad)}
@@ -329,6 +332,7 @@ dialog .field{margin:16px 0 6px}
     <div class="seg" id="segRep" style="margin-bottom:18px">
       <button type="button" data-rtab="dash" aria-pressed="true">Dashboard ข้อมูลผู้ใช้งาน</button>
       <button type="button" data-rtab="export" aria-pressed="false">ส่งออกรายงาน</button>
+      <button type="button" data-rtab="promote" aria-pressed="false">เลื่อนระดับชั้น</button>
     </div>
 
     <!-- 1.1 Dashboard -->
@@ -352,8 +356,37 @@ dialog .field{margin:16px 0 6px}
           <button type="button" data-tab="users" aria-pressed="false">ผู้ใช้ทั้งหมด</button>
         </div>
         <label class="field" style="margin-left:auto"><span>ค้นหาในตาราง</span><input type="text" id="qAdmin" placeholder="ชื่อหรือรหัส"></label>
+        <div class="actions" id="delBar" hidden>
+          <button type="button" class="btn danger" id="btnDelMode">ลบข้อมูล</button>
+          <button type="button" class="btn" id="btnSelAll" hidden>เลือกทั้งหมด</button>
+          <button type="button" class="btn danger armed" id="btnDelDo" hidden disabled>ลบที่เลือก (0)</button>
+          <button type="button" class="btn" id="btnDelCancel" hidden>ยกเลิก</button>
+        </div>
       </div>
       <div class="tbl-wrap" id="adminBody"></div>
+    </div>
+
+    <!-- 1.3 เลื่อนระดับชั้น -->
+    <div id="repPromote" hidden>
+      <div class="panel">
+        <h2>เลื่อนระดับชั้น / จบการศึกษา</h2>
+        <div class="toolbar" style="margin:0">
+          <label class="field"><span>ปีการศึกษา</span><select id="pYear"></select></label>
+          <label class="field"><span>สาขา</span><select id="pMajor"></select></label>
+          <label class="field"><span>ระดับชั้นปัจจุบัน</span><select id="pLevel"></select></label>
+          <div class="actions"><button type="button" class="btn primary" id="btnPSearch">ค้นหา</button></div>
+        </div>
+        <p class="hint">ต้องเลือกปีการศึกษาและระดับชั้น ควรส่งออกรายงานของปีนี้ก่อนเลื่อนชั้นทุกครั้ง เพราะหลังเปลี่ยนปีการศึกษา จะค้นรายงานปีเก่าไม่เจอนักศึกษากลุ่มนี้</p>
+      </div>
+      <div id="pResult" hidden style="margin-top:18px">
+        <div class="toolbar" style="margin-bottom:12px;align-items:flex-end">
+          <b id="pCount" style="margin-right:auto"></b>
+          <button type="button" class="btn" id="btnPAll">เลือกทั้งหมด</button>
+          <label class="field" id="pYearNewRow"><span>ปีการศึกษาใหม่</span><select id="pNewYear"></select></label>
+          <span class="actions" id="pActions"></span>
+        </div>
+        <div class="tbl-wrap" id="pTable"></div>
+      </div>
     </div>
 
     <!-- 1.2 ส่งออกรายงาน -->
@@ -389,6 +422,18 @@ dialog .field{margin:16px 0 6px}
     <div class="actions" style="justify-content:flex-end;margin-top:14px">
       <button type="button" class="btn" id="pinCancel">ยกเลิก</button>
       <button type="submit" class="btn primary" id="pinOk">เข้าสู่ระบบ</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="cfDlg" aria-labelledby="cfTitle">
+  <form id="cfForm">
+    <h2 id="cfTitle"></h2>
+    <div id="cfBody" class="cfbody"></div>
+    <label class="field" id="cfTypeRow" hidden><span></span><input type="text" id="cfType" autocomplete="off"></label>
+    <div class="actions" style="justify-content:flex-end;margin-top:14px">
+      <button type="button" class="btn" id="cfNo">ยกเลิก</button>
+      <button type="submit" class="btn primary" id="cfYes">ยืนยัน</button>
     </div>
   </form>
 </dialog>
@@ -445,6 +490,7 @@ const YEARS = Array.from({ length: 13 }, (_, i) => String(2568 + i));   // ป�
 const PREFIXES = ['นาย', 'นางสาว'];
 const MAJORS = ['สาขาคอมพิวเตอร์', 'สาขาช่างยนต์', 'สาขาไฟฟ้า', 'สาขาบัญชี'];
 const LEVELS = ['ปวช.1', 'ปวช.2', 'ปวช.3', 'ปวส.1', 'ปวส.2'];
+const NEXT = { 'ปวช.1': ['ปวช.2'], 'ปวช.2': ['ปวช.3'], 'ปวช.3': ['ปวส.1', 'จบการศึกษา'], 'ปวส.1': ['ปวส.2'], 'ปวส.2': ['จบการศึกษา'] };   // ปลายทางที่เลื่อนได้
 const MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 const DAYS = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
 
@@ -494,7 +540,8 @@ function initSelects() {
   fillSel($('#eYear'), YEARS, 'เลือกปีการศึกษา'); fillSel($('#ePrefix'), PREFIXES, 'เลือกคำนำหน้า');
   fillSel($('#eGroup'), MAJORS, 'เลือกสาขา'); fillSel($('#eLevel'), LEVELS, 'เลือกระดับชั้น');
   fillSel($('#xYear'), YEARS, 'ทั้งหมด'); fillSel($('#xMajor'), MAJORS, 'ทั้งหมด'); fillSel($('#xLevel'), LEVELS, 'ทั้งหมด');
-  fillSel($('#dYear'), YEARS, 'ทั้งหมด'); fillSel($('#dMajor'), MAJORS, 'ทั้งหมด'); fillSel($('#dLevel'), LEVELS, 'ทั้งหมด');
+  fillSel($('#dYear'), YEARS, 'ทั้งหมด'); fillSel($('#dMajor'), MAJORS, 'ทั้งหมด'); fillSel($('#dLevel'), LEVELS.concat(['จบการศึกษา']), 'ทั้งหมด');
+  fillSel($('#pYear'), YEARS, 'เลือกปีการศึกษา'); fillSel($('#pMajor'), MAJORS, 'ทั้งหมด'); fillSel($('#pLevel'), LEVELS, 'เลือกระดับชั้น');
 }
 
 async function gs(fn, ...args) {
@@ -548,7 +595,7 @@ const S = {
   streak: {}, cool: {}, unkFrames: 0, unkCool: 0,
   modelsReady: false, dataReady: false, scanStarted: false, loopOn: false, sound: true,
   regFaces: [], capturing: false, dupAck: false, lastGrabMsg: '',
-  tab: 'report', report: []
+  tab: 'report', report: [], sel: new Set(), delMode: false, visIds: [], pList: [], pSel: new Set()
 };
 
 /* =====================  กล้อง  ===================== */
@@ -1151,8 +1198,95 @@ function renderDash(done, absent, total) {
     '<p class="hint" style="grid-column:1/-1">ข้อมูลวันที่ ' + esc(thaiDate($('#repDate').value || S.today)) + '</p></div>';
 }
 function showRepTab(t) {
-  $('#repDash').hidden = t !== 'dash'; $('#repExport').hidden = t !== 'export';
+  $('#repDash').hidden = t !== 'dash'; $('#repExport').hidden = t !== 'export'; $('#repPromote').hidden = t !== 'promote';
   $$('#segRep button').forEach(b => b.setAttribute('aria-pressed', b.dataset.rtab === t));
+}
+
+// ป๊อปอัปยืนยันกลาง: o = {title, html, yes, danger, word}; ถ้ากำหนด word ต้องพิมพ์คำนั้นก่อนปุ่มยืนยันจะกดได้ คืนค่า Promise<boolean>
+function confirmAction(o) {
+  return new Promise(res => {
+    const dlg = $('#cfDlg'), inp = $('#cfType'), yes = $('#cfYes'), need = o.word || '';
+    $('#cfTitle').textContent = o.title; $('#cfBody').innerHTML = o.html;
+    $('#cfTypeRow').hidden = !need; $('#cfTypeRow span').textContent = 'พิมพ์คำว่า “' + need + '” เพื่อยืนยัน'; inp.value = '';
+    yes.textContent = o.yes || 'ยืนยัน'; yes.className = 'btn ' + (o.danger ? 'danger armed' : 'primary'); yes.disabled = !!need;
+    inp.oninput = () => { yes.disabled = !!need && inp.value.trim() !== need; };
+    let ok = false;
+    $('#cfForm').onsubmit = e => { e.preventDefault(); ok = true; dlg.close(); };
+    $('#cfNo').onclick = () => dlg.close();
+    dlg.onclose = () => res(ok);
+    dlg.showModal();
+  });
+}
+
+// แถบปุ่มลบ: ปกติมีปุ่ม "ลบข้อมูล" ; ในโหมดลบมี เลือกทั้งหมด / ลบที่เลือก (n) / ยกเลิก (แสดงเฉพาะแท็บ "ผู้ใช้ทั้งหมด")
+function renderDelBar() {
+  const isU = S.tab === 'users';
+  if (!isU && S.delMode) { S.delMode = false; S.sel = new Set(); }
+  $('#delBar').hidden = !isU;
+  $('#btnDelMode').hidden = S.delMode;
+  ['#btnSelAll', '#btnDelDo', '#btnDelCancel'].forEach(s => $(s).hidden = !S.delMode);
+  $('#btnSelAll').textContent = S.visIds.length && S.visIds.every(id => S.sel.has(id)) ? 'ยกเลิกเลือกทั้งหมด' : 'เลือกทั้งหมด';
+  $('#btnDelDo').textContent = 'ลบที่เลือก (' + S.sel.size + ')';
+  $('#btnDelDo').disabled = !S.sel.size;
+}
+async function doDelete() {
+  const ids = [...S.sel];
+  if (!ids.length) return;
+  const names = ids.slice(0, 5).map(id => (S.adminUsers.find(u => u.id === id) || {}).name || id);
+  const ok = await confirmAction({ title: 'ยืนยันการลบข้อมูล', danger: true, yes: 'ลบถาวร', word: ids.length > 10 ? 'ลบ' : '',
+    html: '<p>ลบนักศึกษา <b>' + ids.length + ' คน</b> ออกจากระบบถาวร กู้คืนไม่ได้ (ประวัติเช็คชื่อเดิมยังอยู่)</p><p class="hint">เช่น ' + names.map(esc).join(', ') + (ids.length > 5 ? ' และอีก ' + (ids.length - 5) + ' คน' : '') + '</p><p class="msg warn">ควรส่งออกรายงานของปีนี้ก่อนลบ</p>' });
+  if (!ok) return;
+  const b = $('#btnDelDo'); b.disabled = true; b.textContent = 'กำลังลบ…';
+  try {
+    const r = await gs('deleteUsers', S.pin, ids), gone = new Set(ids);
+    S.adminUsers = S.adminUsers.filter(u => !gone.has(u.id)); S.users = S.users.filter(u => !gone.has(u.id));
+    S.delMode = false; S.sel = new Set();
+    toast('ลบข้อมูล ' + r.deleted + ' คนแล้ว', 'ok'); renderAdmin();
+  } catch (e) { toast(cleanErr(e), 'bad'); renderDelBar(); }
+}
+
+// ---------- เลื่อนระดับชั้น / จบการศึกษา ----------
+async function searchPromote() {
+  const y = $('#pYear').value, m = $('#pMajor').value, l = $('#pLevel').value;
+  if (!y || !l) { toast('เลือกปีการศึกษาและระดับชั้นก่อนค้นหา', 'bad'); return; }
+  const b = $('#btnPSearch'); b.disabled = true; b.textContent = 'กำลังค้นหา…';
+  try {
+    S.adminUsers = await gs('adminListUsers', S.pin);   // ดึงข้อมูลล่าสุดเสมอ
+    S.pCtx = { y, m, l };
+    S.pList = S.adminUsers.filter(u => !u.status && u.year === y && u.level === l && (!m || u.group === m));
+    S.pSel = new Set();
+    fillSel($('#pNewYear'), YEARS); $('#pNewYear').value = YEARS.includes(String(+y + 1)) ? String(+y + 1) : YEARS[YEARS.length - 1];
+    $('#pResult').hidden = false; renderPromote();
+  } catch (e) { toast(cleanErr(e), 'bad'); } finally { b.disabled = false; b.textContent = 'ค้นหา'; }
+}
+function renderPromoteBar() {   // อัปเดตปุ่ม/จำนวนที่เลือก โดยไม่วาดตารางใหม่ (ไม่ให้โฟกัสช่องติ๊กหาย)
+  const list = S.pList, c = S.pCtx, n = S.pSel.size, tg = NEXT[c.l] || [];
+  $('#pCount').textContent = list.length ? 'พบนักศึกษา ' + list.length + ' คน (' + c.l + ' ปีการศึกษา ' + c.y + (c.m ? ' ' + c.m : '') + ') เลือกแล้ว ' + n + ' คน' : 'ไม่พบนักศึกษาตามเงื่อนไข (หรือจัดการครบแล้ว)';
+  $('#btnPAll').hidden = !list.length;
+  $('#btnPAll').textContent = list.length && n === list.length ? 'ยกเลิกเลือกทั้งหมด' : 'เลือกทั้งหมด';
+  $('#pYearNewRow').hidden = !list.length || !tg.some(t => t !== 'จบการศึกษา');
+  $('#pActions').innerHTML = !list.length ? '' : tg.map(t => '<button type="button" class="btn ' + (t === 'จบการศึกษา' ? 'danger' : 'primary') + '" data-pto="' + esc(t) + '"' + (n ? '' : ' disabled') + '>' + (t === 'จบการศึกษา' ? 'จบการศึกษา' : 'เลื่อนเป็น ' + esc(t)) + ' (' + n + ')</button>').join('');
+}
+function renderPromote() {
+  renderPromoteBar();
+  $('#pTable').innerHTML = !S.pList.length ? '' : '<table><thead><tr><th scope="col">เลือก</th>' + ['รหัส', 'ชื่อ-สกุล', 'สาขา', 'ระดับชั้น', 'ปีการศึกษา'].map(x => '<th scope="col">' + x + '</th>').join('') + '</tr></thead><tbody>' +
+    S.pList.map(u => '<tr class="num"><td><label class="selbox"><input type="checkbox" data-psel="' + esc(u.id) + '"' + (S.pSel.has(u.id) ? ' checked' : '') + ' aria-label="เลือก ' + esc(u.name) + '"></label></td><td>' + esc(u.id) + '</td><td>' + esc(u.name) + '</td><td>' + esc(u.group || '-') + '</td><td>' + esc(u.level) + '</td><td>' + esc(u.year) + '</td></tr>').join('') + '</tbody></table>';
+}
+async function doPromote(to) {
+  const ids = [...S.pSel], c = S.pCtx, grad = to === 'จบการศึกษา', ny = $('#pNewYear').value;
+  if (!ids.length) return;
+  const ok = await confirmAction({ title: grad ? 'ยืนยันการจบการศึกษา' : 'ยืนยันการเลื่อนระดับชั้น', danger: grad, yes: grad ? 'ยืนยันจบการศึกษา' : 'ยืนยันการเลื่อนชั้น', word: ids.length > 10 ? 'ยืนยัน' : '',
+    html: grad ? '<p>ให้ <b>' + ids.length + ' คน</b> (' + esc(c.l) + ') เป็น “จบการศึกษา”</p><p class="msg warn">ระบบจะ<b>ลบข้อมูลใบหน้า</b>ของคนกลุ่มนี้ทันที และพวกเขาจะหายจากหน้าสแกนและ Dashboard (ยังอยู่ในรายงานส่งออก)</p>'
+      : '<p>เลื่อน <b>' + ids.length + ' คน</b> จาก ' + esc(c.l) + ' เป็น <b>' + esc(to) + '</b></p><p>ปีการศึกษา ' + esc(c.y) + ' → <b>' + esc(ny) + '</b></p><p class="msg warn">ส่งออกรายงานปี ' + esc(c.y) + ' ก่อนยืนยัน เพราะหลังเลื่อนจะค้นรายงานปีเก่าไม่เจอคนกลุ่มนี้</p>' });
+  if (!ok) return;
+  try {
+    const r = await gs('promoteUsers', S.pin, ids, to, grad ? '' : ny), done = new Set(ids);
+    S.pList = S.pList.filter(u => !done.has(u.id)); S.pSel = new Set();
+    if (grad) S.users = S.users.filter(u => !done.has(u.id));   // เครื่องนี้เลิกสแกนคนที่จบแล้วทันที
+    S.adminUsers = await gs('adminListUsers', S.pin);
+    toast((grad ? 'ให้จบการศึกษา ' : 'เลื่อนชั้น ') + r.moved + ' คนแล้ว' + (r.skipped ? ' (ข้าม ' + r.skipped + ' คน ที่ไม่เข้าเงื่อนไข)' : ''), 'ok');
+    renderPromote();
+  } catch (e) { toast(cleanErr(e), 'bad'); }
 }
 
 async function loadAdmin() {
@@ -1173,7 +1307,10 @@ function renderAdmin() {
   const match = (o) => !q || (o.id + ' ' + o.name + ' ' + (o.group || '')).toLowerCase().includes(q);
   // กรองตามปีการศึกษา / สาขา / ระดับชั้น (ช่องว่าง = ทั้งหมด) — ตัวเลข กราฟ และตารางใช้ชุดข้อมูลเดียวกัน
   const fy = $('#dYear').value, fm = $('#dMajor').value, fl = $('#dLevel').value, anyF = !!(fy || fm || fl);
-  const pass = u => (!fy || u.year === fy) && (!fm || u.group === fm) && (!fl || u.level === fl);
+  const pass = u => {   // ผู้ที่จบแล้วไม่แสดงตามปกติ ต้องเลือกระดับชั้น "จบการศึกษา" จึงจะเห็น
+    const grad = u.status === 'จบการศึกษา', gf = fl === 'จบการศึกษา';
+    return (gf ? grad : !grad) && (!fy || u.year === fy) && (!fm || u.group === fm) && (gf || !fl || u.level === fl);
+  };
   const byId = {}; S.adminUsers.forEach(u => byId[u.id] = u);
   const fUsers = S.adminUsers.filter(pass);
   const repRows = S.report.filter(r => byId[r.id] ? pass(byId[r.id]) : !anyF);
@@ -1191,9 +1328,14 @@ function renderAdmin() {
     rows = absent.filter(match).map(u => [u.id, u.name, u.group || '-', u.level || '-']);
   } else {
     head = ['รหัส', 'ชื่อ-สกุล', 'สาขา', 'ระดับชั้น', 'ปีการศึกษา', 'ภาพใบหน้า', 'จัดการ'];
-    rows = fUsers.filter(match).map(u => [u.id, u.name, u.group || '-', u.level || '-', u.year || '-', u.faceCount + ' ภาพ',
-      { html: '<span class="rowact"><button type="button" class="btn green sm" data-edit="' + esc(u.id) + '">แก้ไข</button><button type="button" class="btn danger sm" data-del="' + esc(u.id) + '">ลบ</button></span>' }]);
+    const list = fUsers.filter(match);
+    S.visIds = list.map(u => u.id);
+    S.sel = new Set([...S.sel].filter(id => S.visIds.includes(id)));   // รายการที่หลุดจากตัวกรอง/ค้นหา ถูกเอาติ๊กออกอัตโนมัติ
+    rows = list.map(u => [u.id, u.name, u.group || '-', u.status ? 'จบการศึกษา' : (u.level || '-'), u.year || '-', u.status ? '-' : u.faceCount + ' ภาพ',
+      { html: '<span class="rowact"><button type="button" class="btn green sm" data-edit="' + esc(u.id) + '">แก้ไข</button>' +
+        (S.delMode ? '<label class="selbox"><input type="checkbox" data-sel="' + esc(u.id) + '"' + (S.sel.has(u.id) ? ' checked' : '') + ' aria-label="เลือก ' + esc(u.name) + '"></label>' : '') + '</span>' }]);
   }
+  renderDelBar();
   if (!rows.length) {
     $('#adminBody').innerHTML = '<p class="empty" style="padding:20px">' + (S.tab === 'absent' && S.adminUsers.length ? 'ทุกคนเช็คชื่อครบแล้ว' : 'ไม่พบข้อมูล') + '</p>';
     return;
@@ -1289,21 +1431,6 @@ async function saveEdit(ev) {
   finally { ok.disabled = false; ok.textContent = 'บันทึกการแก้ไข'; }
 }
 
-async function onDelete(btn) {
-  if (!btn.classList.contains('armed')) {
-    btn.classList.add('armed'); btn.textContent = 'ยืนยันลบ';
-    setTimeout(() => { if (btn.isConnected) { btn.classList.remove('armed'); btn.textContent = 'ลบ'; } }, 3000);
-    return;
-  }
-  const id = btn.dataset.del; btn.disabled = true;
-  try {
-    await gs('deleteUser', S.pin, id);
-    S.adminUsers = S.adminUsers.filter(u => u.id !== id);
-    S.users = S.users.filter(u => u.id !== id);
-    toast('ลบผู้ใช้รหัส ' + id + ' แล้ว', 'ok');
-    renderAdmin();
-  } catch (e) { toast(cleanErr(e), 'bad'); btn.disabled = false; }
-}
 
 /* =====================  สลับหน้า / PIN  ===================== */
 async function go(view, keep) {
@@ -1332,7 +1459,7 @@ function renderNav() {
   $$('.nav .adm').forEach(b => b.hidden = !on);
 }
 function doLogout() {
-  S.pin = ''; S.adminUsers = []; S.report = []; S.xData = null; $('#xResult').hidden = true; S.regFaces = []; S.regSel = null;
+  S.pin = ''; S.adminUsers = []; S.report = []; S.xData = null; $('#xResult').hidden = true; S.pList = []; S.pSel = new Set(); $('#pResult').hidden = true; S.delMode = false; S.sel = new Set(); S.regFaces = []; S.regSel = null;
   renderNav(); toast('ออกจากระบบแล้ว', 'ok'); go('scan');
 }
 
@@ -1381,10 +1508,8 @@ function bind() {
   $('#btnRefresh').addEventListener('click', loadAdmin);
   $('#qAdmin').addEventListener('input', renderAdmin);
   $('#segAdmin').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { S.tab = b.dataset.tab; renderAdmin(); } });
-  $('#adminBody').addEventListener('click', e => {
-    const d = e.target.closest('[data-del]'), ed = e.target.closest('[data-edit]');
-    if (d) onDelete(d); else if (ed) openEdit(ed.dataset.edit);
-  });
+  $('#adminBody').addEventListener('click', e => { const ed = e.target.closest('[data-edit]'); if (ed) openEdit(ed.dataset.edit); });
+  $('#adminBody').addEventListener('change', e => { const c = e.target.closest('[data-sel]'); if (!c) return; if (c.checked) S.sel.add(c.dataset.sel); else S.sel.delete(c.dataset.sel); renderDelBar(); });
   $('#editForm').addEventListener('submit', saveEdit);
   $('#editCancel').addEventListener('click', () => $('#editDlg').close());
   $('#editFace').addEventListener('click', () => startFaceEdit(editing.id));
@@ -1392,6 +1517,14 @@ function bind() {
   $('#btnXlsx').addEventListener('click', exportXlsx);
   $('#btnPdf').addEventListener('click', exportPdf);
   $('#btnSearch').addEventListener('click', searchExport);
+  $('#btnDelMode').addEventListener('click', () => { S.delMode = true; S.sel = new Set(); renderAdmin(); });
+  $('#btnDelCancel').addEventListener('click', () => { S.delMode = false; S.sel = new Set(); renderAdmin(); });
+  $('#btnSelAll').addEventListener('click', () => { const all = S.visIds.length && S.visIds.every(id => S.sel.has(id)); S.sel = new Set(all ? [] : S.visIds); renderAdmin(); });
+  $('#btnDelDo').addEventListener('click', doDelete);
+  $('#btnPSearch').addEventListener('click', searchPromote);
+  $('#btnPAll').addEventListener('click', () => { S.pSel = new Set(S.pSel.size === S.pList.length ? [] : S.pList.map(u => u.id)); renderPromote(); });
+  $('#pActions').addEventListener('click', e => { const b = e.target.closest('[data-pto]'); if (b) doPromote(b.dataset.pto); });
+  $('#pTable').addEventListener('change', e => { const c = e.target.closest('[data-psel]'); if (!c) return; if (c.checked) S.pSel.add(c.dataset.psel); else S.pSel.delete(c.dataset.psel); renderPromoteBar(); });
   ['#xYear', '#xMajor', '#xLevel'].forEach(s => $(s).addEventListener('change', () => { S.xStale = true; updateXBtns(); }));
   ['#dYear', '#dMajor', '#dLevel'].forEach(s => $(s).addEventListener('change', renderAdmin));
   $('#segRep').addEventListener('click', e => { const b = e.target.closest('button'); if (b) showRepTab(b.dataset.rtab); });
