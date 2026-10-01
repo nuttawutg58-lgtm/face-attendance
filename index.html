@@ -176,6 +176,18 @@ dialog .field{margin:16px 0 6px}
 .btn.green{background:var(--ok);border-color:var(--ok);color:#fff}
 .btn.green:hover{background:#0b6146;border-color:#0b6146}
 .icon-btn.txt{display:flex;align-items:center;width:auto;padding:0 14px;gap:6px;border-radius:20px;font-size:.875rem}
+.dash{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:18px}
+.donut{position:relative;width:180px;height:180px}
+.donut svg{width:100%;height:100%;display:block}
+.dc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.dc b{font-size:1.8rem;line-height:1.2}
+.dc span{font-size:.85rem;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.card{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:4px}
+.card b{font-size:1.9rem;line-height:1.2}
+.card span{font-size:.9rem;color:var(--muted)}
+.sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+@media (max-width:640px){.dash{grid-template-columns:1fr;justify-items:center}.cards{grid-template-columns:1fr;width:100%}}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .slots{grid-template-columns:repeat(5,1fr);gap:8px}
 @media (max-width:640px){.slots{grid-template-columns:repeat(3,1fr)}}
@@ -308,41 +320,63 @@ dialog .field{margin:16px 0 6px}
         <button type="submit" class="btn primary" id="btnSave" disabled>บันทึกผู้ใช้</button>
         <button type="button" class="btn" id="btnCancelFace" hidden>ยกเลิก</button>
       </div>
-      <p class="hint">กด “เริ่มสแกนใบหน้า” แล้วทำตามคำแนะนำบนหน้าจอ (กะพริบตา มองตรง หันซ้าย หันขวา เงย ก้ม) ระบบจะบันทึกแต่ละมุมให้อัตโนมัติ อยู่ในที่สว่าง ไม่สวมหมวกหรือแว่นดำ กดที่ภาพด้านล่างเพื่อสแกนมุมนั้นใหม่</p>
+      <p class="hint">กด “เริ่มสแกนใบหน้า” แล้วทำตามคำแนะนำบนหน้าจอ (มองตรง หันซ้าย หันขวา เงยหน้า ก้มหน้า) ระบบจะบันทึกแต่ละมุมให้อัตโนมัติ อยู่ในที่สว่าง ไม่สวมหมวกหรือแว่นดำ กดที่ภาพด้านล่างเพื่อสแกนมุมนั้นใหม่</p>
     </form>
   </section>
 
   <!-- ================= รายงาน ================= -->
   <section id="view-admin" class="view admin" hidden>
-    <div class="toolbar">
-      <label class="field"><span>วันที่</span><input type="date" id="repDate"></label>
-      <label class="field"><span>กิจกรรม</span><select id="repAct"></select></label>
-      <label class="field"><span>ค้นหา</span><input type="text" id="qAdmin" placeholder="ชื่อหรือรหัส"></label>
-      <div class="actions">
-        <button type="button" class="btn" id="btnRefresh">โหลดใหม่</button>
-        <a class="btn" id="lnkSheet" href="#" target="_blank" rel="noopener" style="text-decoration:none">เปิด Google Sheet</a>
-      </div>
+    <div class="seg" id="segRep" style="margin-bottom:18px">
+      <button type="button" data-rtab="dash" aria-pressed="true">Dashboard ข้อมูลผู้ใช้งาน</button>
+      <button type="button" data-rtab="export" aria-pressed="false">ส่งออกรายงาน</button>
     </div>
-    <div class="panel" id="exportPanel" style="margin-bottom:18px">
-      <h2>ส่งออกรายงานจำนวนวันเช็คชื่อ</h2>
-      <div class="toolbar" style="margin:0">
-        <label class="field"><span>ปีการศึกษา</span><select id="xYear"></select></label>
-        <label class="field"><span>สาขา</span><select id="xMajor"></select></label>
-        <label class="field"><span>ระดับชั้น</span><select id="xLevel"></select></label>
+
+    <!-- 1.1 Dashboard -->
+    <div id="repDash">
+      <div class="toolbar">
+        <label class="field"><span>วันที่</span><input type="date" id="repDate"></label>
+        <label class="field"><span>ปีการศึกษา</span><select id="dYear"></select></label>
+        <label class="field"><span>สาขา</span><select id="dMajor"></select></label>
+        <label class="field"><span>ระดับชั้น</span><select id="dLevel"></select></label>
+        <label class="field" hidden><span>กิจกรรม</span><select id="repAct"></select></label>
         <div class="actions">
-          <button type="button" class="btn green" id="btnXlsx">ดาวน์โหลด Excel</button>
-          <button type="button" class="btn" id="btnPdf">บันทึกเป็น PDF</button>
+          <button type="button" class="btn" id="btnRefresh">โหลดใหม่</button>
+          <a class="btn" id="lnkSheet" href="#" target="_blank" rel="noopener" style="text-decoration:none">เปิด Google Sheet</a>
         </div>
       </div>
-      <p class="hint">นับ “จำนวนวันที่เช็คชื่อ” ทั้งหมดของนักศึกษาแต่ละคน ส่วน PDF จะเปิดหน้าต่างพิมพ์ ให้เลือกเครื่องพิมพ์เป็น “บันทึกเป็น PDF”</p>
+      <div id="stats"></div>
+      <div class="toolbar" style="margin-bottom:12px;align-items:center">
+        <div class="seg" id="segAdmin">
+          <button type="button" data-tab="report" aria-pressed="true">เช็คชื่อแล้ว</button>
+          <button type="button" data-tab="absent" aria-pressed="false">ยังไม่เช็คชื่อ</button>
+          <button type="button" data-tab="users" aria-pressed="false">ผู้ใช้ทั้งหมด</button>
+        </div>
+        <label class="field" style="margin-left:auto"><span>ค้นหาในตาราง</span><input type="text" id="qAdmin" placeholder="ชื่อหรือรหัส"></label>
+      </div>
+      <div class="tbl-wrap" id="adminBody"></div>
     </div>
-    <div class="stats" id="stats"></div>
-    <div class="seg" id="segAdmin" style="margin-bottom:14px">
-      <button type="button" data-tab="report" aria-pressed="true">เช็คชื่อแล้ว</button>
-      <button type="button" data-tab="absent" aria-pressed="false">ยังไม่เช็คชื่อ</button>
-      <button type="button" data-tab="users" aria-pressed="false">ผู้ใช้ทั้งหมด</button>
+
+    <!-- 1.2 ส่งออกรายงาน -->
+    <div id="repExport" hidden>
+      <div class="panel">
+        <h2>ส่งออกรายงานจำนวนวันเช็คชื่อ</h2>
+        <div class="toolbar" style="margin:0">
+          <label class="field"><span>ปีการศึกษา</span><select id="xYear"></select></label>
+          <label class="field"><span>สาขา</span><select id="xMajor"></select></label>
+          <label class="field"><span>ระดับชั้น</span><select id="xLevel"></select></label>
+          <div class="actions"><button type="button" class="btn primary" id="btnSearch">ค้นหา</button></div>
+        </div>
+        <p class="hint">เลือกเงื่อนไขแล้วกด “ค้นหา” ผลลัพธ์จะแสดงด้านล่าง ถ้าเปลี่ยนเงื่อนไขให้กด “ค้นหา” อีกครั้ง แล้วจึงดาวน์โหลดได้</p>
+      </div>
+      <div id="xResult" hidden style="margin-top:18px">
+        <div class="toolbar" style="margin-bottom:12px;align-items:center">
+          <b id="xCount" style="margin-right:auto"></b>
+          <button type="button" class="btn green" id="btnXlsx" disabled>ดาวน์โหลด Excel</button>
+          <button type="button" class="btn" id="btnPdf" disabled>บันทึกเป็น PDF</button>
+        </div>
+        <div class="tbl-wrap" id="xTable"></div>
+      </div>
     </div>
-    <div class="tbl-wrap" id="adminBody"></div>
   </section>
 </main>
 
@@ -460,6 +494,7 @@ function initSelects() {
   fillSel($('#eYear'), YEARS, 'เลือกปีการศึกษา'); fillSel($('#ePrefix'), PREFIXES, 'เลือกคำนำหน้า');
   fillSel($('#eGroup'), MAJORS, 'เลือกสาขา'); fillSel($('#eLevel'), LEVELS, 'เลือกระดับชั้น');
   fillSel($('#xYear'), YEARS, 'ทั้งหมด'); fillSel($('#xMajor'), MAJORS, 'ทั้งหมด'); fillSel($('#xLevel'), LEVELS, 'ทั้งหมด');
+  fillSel($('#dYear'), YEARS, 'ทั้งหมด'); fillSel($('#dMajor'), MAJORS, 'ทั้งหมด'); fillSel($('#dLevel'), LEVELS, 'ทั้งหมด');
 }
 
 async function gs(fn, ...args) {
@@ -944,15 +979,13 @@ async function grabAvg() {
   return { desc, thumb: shots[0].thumb };
 }
 
-// ---------- สแกนใบหน้าแบบมีคำแนะนำ + ตรวจความมีชีวิตเบื้องต้น (กะพริบตา + ขยับศีรษะตามสั่ง) ----------
-// ใช้จุดสำคัญบนใบหน้า 68 จุดของ face-api: yaw = หันซ้าย/ขวา, pitch = เงย/ก้ม, ear = ความเปิดของตา (ต่ำ = หลับตา)
-function eyeEar(p, i) { const d = (a, b) => Math.hypot(p[a].x - p[b].x, p[a].y - p[b].y); return (d(i + 1, i + 5) + d(i + 2, i + 4)) / (2 * d(i, i + 3)); }
+// ---------- สแกนใบหน้าแบบมีคำแนะนำ + ขยับศีรษะตามคำสั่ง ----------
+// ใช้จุดสำคัญบนใบหน้า 68 จุดของ face-api: yaw = หันซ้าย/ขวา, pitch = เงย/ก้ม
 function metrics(lm) {
   const p = lm.positions, eyeY = p.slice(36, 48).reduce((a, q) => a + q.y, 0) / 12;
   return {
     yaw: (p[30].x - p[0].x) / (p[16].x - p[0].x) - 0.5,   // + = หันไปทางซ้ายของผู้ถูกสแกน
-    pitch: (p[30].y - eyeY) / (p[8].y - eyeY),            // ค่ามากขึ้น = ก้ม
-    ear: (eyeEar(p, 36) + eyeEar(p, 42)) / 2
+    pitch: (p[30].y - eyeY) / (p[8].y - eyeY)             // ค่ามากขึ้น = ก้ม
   };
 }
 // ตรวจ 1 เฟรม: ต้องมีใบหน้าเดียวและอยู่ในกรอบวงรี ไม่เช่นนั้นคืนข้อความแนะนำ (hint)
@@ -966,13 +999,11 @@ async function look(v, oval) {
   return { m: metrics(dets[0].landmarks) };
 }
 
-// ลำดับ: กะพริบตา (ผ่านแล้วข้ามได้) → หน้าตรง (ใช้เป็นฐานเทียบ) → มุมที่เหลือ; ผ่านแต่ละขั้นแล้วบันทึกและไปขั้นต่อไปเอง
+// ลำดับ: หน้าตรง (ใช้เป็นฐานเทียบ) → หันซ้าย → หันขวา → เงย → ก้ม; ผ่านแต่ละขั้นแล้วบันทึกและไปขั้นต่อไปเอง
 async function guidedRun(todo) {
   const G = S.g = { run: true }, v = camReg.video, oval = $('#regOval');
   S.capturing = true; regMsg('');
-  if (!S.regFaces.some(Boolean)) S.liveOk = false;
   const steps = [];
-  if (!S.liveOk) steps.push({ blink: true });
   steps.push({ i: 0 });
   todo.filter(i => i > 0).forEach(i => steps.push({ i }));
   const say = (t, s) => { $('#regInstr').textContent = t; camReg.setPill(s || 'busy', t); };
@@ -981,28 +1012,17 @@ async function guidedRun(todo) {
   try {
     for (let si = 0; si < steps.length && G.run; si++) {
       const st = steps[si], tag = 'ขั้นที่ ' + (si + 1) + '/' + steps.length + ': ';
-      let ok = 0, hist = [], ears = [], closed = false;
-      const t0 = Date.now();
+      let ok = 0, hist = [];
       while (G.run) {
         const r = await look(v, oval);
         await sleep(30);
         if (r.hint) { ok = 0; hist = []; say(r.hint, 'warn'); continue; }
         const m = r.m;
-        if (st.blink) {   // กะพริบตา: ตาปิด (ear ต่ำกว่า 70% ของค่าตอนเปิด) แล้วเปิดกลับ
-          say(tag + 'มองตรงแล้วกะพริบตา 1 ครั้ง');
-          ears.push(m.ear); if (ears.length > 45) ears.shift();
-          if (ears.length < 8) continue;
-          const open = ears.slice().sort((a, b) => a - b)[Math.floor(ears.length * 0.8)];
-          if (m.ear < open * 0.7) closed = true;
-          else if (closed && m.ear > open * 0.85) { S.liveOk = true; beep('dup'); break; }
-          if (Date.now() - t0 > 12000) say(tag + 'กะพริบตาให้ชัดเจนขึ้น', 'warn');
-          continue;
-        }
-        if (st.i === 0) {   // หน้าตรง: ต้องนิ่งประมาณ 6 เฟรม
+        if (st.i === 0) {   // หน้าตรง: ต้องนิ่งประมาณ 5 เฟรม
           say(tag + STEPS[0].hint);
-          hist.push(m); if (hist.length > 6) hist.shift();
+          hist.push(m); if (hist.length > 5) hist.shift();
           const spread = k => Math.max(...hist.map(x => x[k])) - Math.min(...hist.map(x => x[k]));
-          if (!(hist.length === 6 && Math.abs(m.yaw) < 0.08 && spread('yaw') < 0.03 && spread('pitch') < 0.03)) continue;
+          if (!(hist.length === 5 && Math.abs(m.yaw) < 0.10 && spread('yaw') < 0.04 && spread('pitch') < 0.04)) continue;
         } else {            // มุมอื่น: ท่าทางต้องผ่านเงื่อนไขต่อเนื่อง 4 เฟรม
           say(tag + STEPS[st.i].hint);
           ok = POSE_OK[st.i](m.yaw - S.base.yaw, m.pitch - S.base.pitch) ? ok + 1 : 0;
@@ -1118,6 +1138,23 @@ async function saveUser(ev) {
 }
 
 /* =====================  หน้ารายงาน  ===================== */
+// กราฟวงกลม (SVG) + การ์ดสถิติ: เช็คชื่อแล้ว / ยังไม่ได้เช็คชื่อ / ผู้ใช้ทั้งหมด
+function renderDash(done, absent, total) {
+  const share = total ? done / total * 100 : 0, pct = Math.round(share * 10) / 10, R = 15.9155;   // รอบวงกลม = 100 หน่วย
+  $('#stats').innerHTML = '<div class="dash"><div class="donut"><svg viewBox="0 0 42 42" role="img" aria-label="ผู้ใช้เช็คชื่อแล้ว ' + pct + ' เปอร์เซ็นต์">' +
+    '<circle cx="21" cy="21" r="' + R + '" fill="none" stroke="' + (total ? '#B3261E' : '#D8DBE9') + '" stroke-width="6"/>' +
+    (done ? '<circle cx="21" cy="21" r="' + R + '" fill="none" stroke="#0F7A55" stroke-width="6" stroke-dasharray="' + share + ' ' + (100 - share) + '" transform="rotate(-90 21 21)"/>' : '') +
+    '</svg><div class="dc"><b class="num">' + pct + '%</b><span>เช็คชื่อแล้ว</span></div></div>' +
+    '<div class="cards"><div class="card"><span>ผู้ใช้ทั้งหมด</span><b class="num">' + total + '</b></div>' +
+    '<div class="card"><span><i class="sw" style="background:#0F7A55"></i>เช็คชื่อแล้ว</span><b class="num" style="color:var(--ok)">' + done + '</b></div>' +
+    '<div class="card"><span><i class="sw" style="background:#B3261E"></i>ยังไม่ได้เช็คชื่อ</span><b class="num" style="color:var(--bad)">' + absent + '</b></div></div>' +
+    '<p class="hint" style="grid-column:1/-1">ข้อมูลวันที่ ' + esc(thaiDate($('#repDate').value || S.today)) + '</p></div>';
+}
+function showRepTab(t) {
+  $('#repDash').hidden = t !== 'dash'; $('#repExport').hidden = t !== 'export';
+  $$('#segRep button').forEach(b => b.setAttribute('aria-pressed', b.dataset.rtab === t));
+}
+
 async function loadAdmin() {
   if (!$('#repDate').value) $('#repDate').value = S.today;
   $('#adminBody').innerHTML = '<p class="empty" style="padding:20px"><span class="spin"></span>กำลังโหลดข้อมูล…</p>';
@@ -1134,26 +1171,27 @@ async function loadAdmin() {
 function renderAdmin() {
   const q = $('#qAdmin').value.trim().toLowerCase();
   const match = (o) => !q || (o.id + ' ' + o.name + ' ' + (o.group || '')).toLowerCase().includes(q);
-  const doneIds = new Set(S.report.map(r => r.id));
-  const absent = S.adminUsers.filter(u => !doneIds.has(u.id));
-
-  $('#stats').innerHTML =
-    '<div><b class="num">' + S.adminUsers.length + '</b><span>ผู้ใช้ทั้งหมด</span></div>' +
-    '<div><b class="num" style="color:var(--ok)">' + doneIds.size + '</b><span>เช็คชื่อแล้ว</span></div>' +
-    '<div><b class="num" style="color:var(--flag-red)">' + absent.length + '</b><span>ยังไม่เช็คชื่อ</span></div>' +
-    '<div style="justify-content:flex-end"><span>' + esc(thaiDate($('#repDate').value || S.today)) + '</span></div>';
+  // กรองตามปีการศึกษา / สาขา / ระดับชั้น (ช่องว่าง = ทั้งหมด) — ตัวเลข กราฟ และตารางใช้ชุดข้อมูลเดียวกัน
+  const fy = $('#dYear').value, fm = $('#dMajor').value, fl = $('#dLevel').value, anyF = !!(fy || fm || fl);
+  const pass = u => (!fy || u.year === fy) && (!fm || u.group === fm) && (!fl || u.level === fl);
+  const byId = {}; S.adminUsers.forEach(u => byId[u.id] = u);
+  const fUsers = S.adminUsers.filter(pass);
+  const repRows = S.report.filter(r => byId[r.id] ? pass(byId[r.id]) : !anyF);
+  const doneIds = new Set(repRows.map(r => r.id));
+  const absent = fUsers.filter(u => !doneIds.has(u.id));
+  renderDash(fUsers.length - absent.length, absent.length, fUsers.length);
 
   $$('#segAdmin button').forEach(b => b.setAttribute('aria-pressed', b.dataset.tab === S.tab));
   let head, rows;
   if (S.tab === 'report') {
     head = ['เวลา', 'รหัส', 'ชื่อ-สกุล', 'สาขา'];
-    rows = S.report.filter(match).map(r => [r.time.slice(0, 5) + ' น.', r.id, r.name, r.group || '-']);
+    rows = repRows.filter(match).map(r => [r.time.slice(0, 5) + ' น.', r.id, r.name, r.group || '-']);
   } else if (S.tab === 'absent') {
     head = ['รหัส', 'ชื่อ-สกุล', 'สาขา', 'ระดับชั้น'];
     rows = absent.filter(match).map(u => [u.id, u.name, u.group || '-', u.level || '-']);
   } else {
     head = ['รหัส', 'ชื่อ-สกุล', 'สาขา', 'ระดับชั้น', 'ปีการศึกษา', 'ภาพใบหน้า', 'จัดการ'];
-    rows = S.adminUsers.filter(match).map(u => [u.id, u.name, u.group || '-', u.level || '-', u.year || '-', u.faceCount + ' ภาพ',
+    rows = fUsers.filter(match).map(u => [u.id, u.name, u.group || '-', u.level || '-', u.year || '-', u.faceCount + ' ภาพ',
       { html: '<span class="rowact"><button type="button" class="btn green sm" data-edit="' + esc(u.id) + '">แก้ไข</button><button type="button" class="btn danger sm" data-del="' + esc(u.id) + '">ลบ</button></span>' }]);
   }
   if (!rows.length) {
@@ -1172,16 +1210,30 @@ function loadScript(src) {
     document.head.appendChild(s);
   });
 }
-async function fetchExport() {
-  const r = await gs('getExport', S.pin, $('#xYear').value, $('#xMajor').value, $('#xLevel').value);
-  if (!r.rows.length) throw new Error('ไม่พบนักศึกษาตามเงื่อนไขที่เลือก');
-  r.filter = 'ปีการศึกษา: ' + ($('#xYear').value || 'ทั้งหมด') + '  |  สาขา: ' + ($('#xMajor').value || 'ทั้งหมด') + '  |  ระดับชั้น: ' + ($('#xLevel').value || 'ทั้งหมด');
-  return r;
+// ค้นหาข้อมูลส่งออก: เก็บผลไว้ใน S.xData ให้ปุ่ม Excel/PDF ใช้ข้อมูลชุดเดียวกับที่แสดง
+async function searchExport() {
+  const b = $('#btnSearch'); b.disabled = true; b.textContent = 'กำลังค้นหา…';
+  try {
+    const y = $('#xYear').value, m = $('#xMajor').value, l = $('#xLevel').value;
+    const r = await gs('getExport', S.pin, y, m, l);
+    r.filter = 'ปีการศึกษา: ' + (y || 'ทั้งหมด') + '  |  สาขา: ' + (m || 'ทั้งหมด') + '  |  ระดับชั้น: ' + (l || 'ทั้งหมด');
+    S.xData = r.rows.length ? r : null; S.xStale = false;
+    $('#xResult').hidden = false;
+    $('#xCount').textContent = r.rows.length ? 'พบนักศึกษา ' + r.rows.length + ' คน  (' + r.filter + ')' : 'ไม่พบนักศึกษาตามเงื่อนไขที่เลือก';
+    $('#xTable').innerHTML = !r.rows.length ? '' : '<table><thead><tr>' + ['ลำดับ', 'รหัสนักศึกษา', 'ชื่อ-นามสกุล', 'สาขา', 'ระดับชั้น', 'จำนวนวันเช็คชื่อ'].map(x => '<th scope="col">' + x + '</th>').join('') + '</tr></thead><tbody>' +
+      r.rows.map((x, i) => '<tr class="num"><td>' + (i + 1) + '</td><td>' + esc(x.id) + '</td><td>' + esc(x.name) + '</td><td>' + esc(x.major || '-') + '</td><td>' + esc(x.level || '-') + '</td><td>' + x.days + '</td></tr>').join('') + '</tbody></table>';
+  } catch (e) { toast(cleanErr(e), 'bad'); }
+  finally { b.disabled = false; b.textContent = 'ค้นหา'; updateXBtns(); }
+}
+function updateXBtns() {
+  const off = !S.xData || S.xStale;
+  $('#btnXlsx').disabled = off; $('#btnPdf').disabled = off;
+  if (S.xStale && S.xData) $('#xCount').textContent = 'เปลี่ยนเงื่อนไขแล้ว กด “ค้นหา” เพื่ออัปเดตผลลัพธ์ก่อนส่งออก';
 }
 async function exportXlsx() {
   const b = $('#btnXlsx'); b.disabled = true;
   try {
-    const r = await fetchExport();
+    const r = S.xData; if (!r) throw new Error('กด “ค้นหา” ก่อนส่งออก');
     if (!window.XLSX) await loadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
     const aoa = [['รายงานจำนวนวันเช็คชื่อ ' + (S.college || '') + ' ' + (S.campus || '')], [r.filter + '  |  ออกรายงาน ' + thaiDate(r.date)], [],
       ['รหัสนักศึกษา', 'ชื่อ-นามสกุล', 'สาขา', 'ระดับชั้น', 'จำนวนวันเช็คชื่อ']]
@@ -1196,7 +1248,7 @@ async function exportXlsx() {
 async function exportPdf() {
   const b = $('#btnPdf'); b.disabled = true;
   try {
-    const r = await fetchExport();
+    const r = S.xData; if (!r) throw new Error('กด “ค้นหา” ก่อนส่งออก');
     const rows = r.rows.map((x, i) => '<tr><td class="c">' + (i + 1) + '</td><td>' + esc(x.id) + '</td><td>' + esc(x.name) + '</td><td>' + esc(x.major || '-') + '</td><td>' + esc(x.level || '-') + '</td><td class="c">' + x.days + '</td></tr>').join('');
     const doc = '<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><title>รายงานเช็คชื่อ_' + r.date + '</title><style>@page{size:A4;margin:14mm}body{font-family:"Noto Sans Thai","IBM Plex Sans Thai","Leelawadee UI",Tahoma,sans-serif;font-size:12px;color:#000}h1{font-size:16px;margin:0}p{margin:2px 0 10px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #444;padding:4px 6px;text-align:left}th{background:#e9ebf5}.c{text-align:center}thead{display:table-header-group}tr{page-break-inside:avoid}</style></head><body><h1>รายงานจำนวนวันเช็คชื่อ</h1><p>' + esc((S.college || '') + ' ' + (S.campus || '')) + '<br>' + esc(r.filter) + '<br>ออกรายงาน ' + esc(thaiDate(r.date)) + '</p><table><thead><tr><th class="c">ลำดับ</th><th>รหัสนักศึกษา</th><th>ชื่อ-นามสกุล</th><th>สาขา</th><th>ระดับชั้น</th><th class="c">จำนวนวันเช็คชื่อ</th></tr></thead><tbody>' + rows + '</tbody></table></body></html>';
     const fr = document.createElement('iframe');
@@ -1280,7 +1332,7 @@ function renderNav() {
   $$('.nav .adm').forEach(b => b.hidden = !on);
 }
 function doLogout() {
-  S.pin = ''; S.adminUsers = []; S.report = []; S.regFaces = []; S.regSel = null;
+  S.pin = ''; S.adminUsers = []; S.report = []; S.xData = null; $('#xResult').hidden = true; S.regFaces = []; S.regSel = null;
   renderNav(); toast('ออกจากระบบแล้ว', 'ok'); go('scan');
 }
 
@@ -1339,6 +1391,10 @@ function bind() {
   $('#btnCancelFace').addEventListener('click', () => { exitFaceEdit(); go('admin'); });
   $('#btnXlsx').addEventListener('click', exportXlsx);
   $('#btnPdf').addEventListener('click', exportPdf);
+  $('#btnSearch').addEventListener('click', searchExport);
+  ['#xYear', '#xMajor', '#xLevel'].forEach(s => $(s).addEventListener('change', () => { S.xStale = true; updateXBtns(); }));
+  ['#dYear', '#dMajor', '#dLevel'].forEach(s => $(s).addEventListener('change', renderAdmin));
+  $('#segRep').addEventListener('click', e => { const b = e.target.closest('button'); if (b) showRepTab(b.dataset.rtab); });
 
   // PIN
   $('#pinCancel').addEventListener('click', () => $('#pinDlg').close());
